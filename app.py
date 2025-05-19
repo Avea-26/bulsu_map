@@ -7,7 +7,7 @@ from folium import plugins
 st.set_page_config(page_title="BulSU Campus Map", layout="wide")
 
 # Title
-st.title("📍 Bulacan State University Malolos Campus Map")
+st.title("Bulacan State University Malolos Campus Map")
 
 # Center map at BulSU Malolos Main Campus
 campus_lat, campus_lon = 14.85806, 120.814
@@ -67,10 +67,11 @@ buildings = [
     {"name": "CSSP Local Student Council, BulSU SG", "initials": "LSC", "lat": 14.858852138074056, "lon": 120.81524482733796},
 ]
 
-# Add markers for buildings
+# Add markers for buildings with initials (default) and full names on hover
 for b in buildings:
     folium.Marker(
         location=[b["lat"], b["lon"]],
+        popup=f"<b>{b['name']}</b>",
         icon=folium.DivIcon(
             html=f"""
             <div style="
