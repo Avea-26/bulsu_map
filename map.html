@@ -1,111 +1,100 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Bulacan State University Malolos Campus Map</title>
+  <title>BulSU Campus Map with Live Location</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     #map {
-      height: 600px;
+      height: 100vh;
+      width: 100%;
     }
     body {
-      background: #1e1e1e;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    h1 {
-      color: #fff;
+      margin: 0;
     }
   </style>
 </head>
 <body>
-  <h1>Bulacan State University Malolos Campus Map</h1>
-  <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    var map = L.map('map').setView([14.8581, 120.8139], 18);
+<div id="map"></div>
 
-    // Esri World Imagery (satellite view)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri'
-    }).addTo(map);
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  // Initialize the map centered at BulSU Malolos
+  var map = L.map('map').setView([14.8514, 120.8165], 18);
 
-    // Function to add campus markers
-    function addMarker(lat, lng, label) {
-      L.marker([lat, lng]).addTo(map).bindPopup(label);
-    }
+  // Add satellite tile layer
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © Esri',
+    maxZoom: 22
+  }).addTo(map);
 
-    // Campus building markers
-    addMarker(14.85810, 120.81390, "Gate 1 (Main Gate)");
-    addMarker(14.85830, 120.81350, "McDonald's");
-    addMarker(14.85800, 120.81420, "CBA Building");
-    addMarker(14.85830, 120.81400, "Federico Hall");
-    addMarker(14.85850, 120.81420, "Valencia Hall");
-    addMarker(14.85810, 120.81440, "Registrar / Cashier / Infirmary");
-    addMarker(14.85780, 120.81400, "CAL / CS / CAFA / GS");
-    addMarker(14.85760, 120.81420, "CSSP / CCJE / Library");
-    addMarker(14.85820, 120.81460, "COE / MIS Office");
-    addMarker(14.85850, 120.81460, "Natividad Hall");
-    addMarker(14.85870, 120.81480, "COED");
-    addMarker(14.85890, 120.81500, "Lab High / Athlete's Building");
-    addMarker(14.85920, 120.81520, "CICT / CON");
-    addMarker(14.85740, 120.81380, "CIT");
-    addMarker(14.85750, 120.81350, "CHTM / BuSU Resto");
-    addMarker(14.85850, 120.81520, "Activity Center");
-    addMarker(14.85800, 120.81520, "SRLC");
-    addMarker(14.85730, 120.81300, "Gate 4");
-    addMarker(14.85900, 120.81580, "NSTP / GADC / DOST Extension");
-    addMarker(14.85920, 120.81480, "Pimentel Hall");
+  // Building markers (sample — replace with real coords later)
+  var buildings = [
+    {name: "Gate 1 (Main Gate)", lat: 14.8519, lon: 120.8164},
+    {name: "Registrar", lat: 14.8516, lon: 120.8169},
+    {name: "Federico Hall", lat: 14.8513, lon: 120.8172},
+    {name: "Athletes' Building", lat: 14.8518, lon: 120.8179},
+    {name: "Activity Center", lat: 14.8510, lon: 120.8170},
+    {name: "CTHM", lat: 14.8507, lon: 120.8165},
+    {name: "Library", lat: 14.8509, lon: 120.8168},
+    {name: "SRLC", lat: 14.8514, lon: 120.8162},
+    {name: "McDonald's", lat: 14.8511, lon: 120.8156}
+  ];
 
-    // Optional campus area circle
-    var circle = L.circle([14.8581, 120.8139], {
-      color: 'blue',
-      fillColor: '#30f',
-      fillOpacity: 0.05,
-      radius: 200
-    }).addTo(map).bindPopup("BulSU Main Campus (approx. 200m radius)");
+  buildings.forEach(function(building) {
+    L.marker([building.lat, building.lon])
+      .addTo(map)
+      .bindPopup(building.name);
+  });
 
-    // User location marker
-    var userMarker = null;
+  // Draw Campus Boundary Radius (approx 250m, adjust if needed)
+  var campusCenter = [14.8514, 120.8165];
+  var campusRadius = 250; // in meters
 
-    // Watch user's location
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        function(position) {
-          var lat = position.coords.latitude;
-          var lng = position.coords.longitude;
+  var campusCircle = L.circle(campusCenter, {
+    color: 'red',
+    fillColor: '#f03',
+    fillOpacity: 0.1,
+    radius: campusRadius
+  }).addTo(map);
 
-          // If marker already exists, move it
-          if (userMarker) {
-            userMarker.setLatLng([lat, lng]);
-          } else {
-            // Create new marker
-            userMarker = L.marker([lat, lng], {
-              icon: L.icon({
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
-                iconSize: [32, 32],
-                iconAnchor: [16, 32],
-                popupAnchor: [0, -32]
-              })
-            }).addTo(map).bindPopup("You are here").openPopup();
-          }
-        },
-        function(error) {
-          console.error("Error getting user location: ", error);
-        },
-        {
-          enableHighAccuracy: true,
-          maximumAge: 0,
-          timeout: 10000
-        }
-      );
+  // User's real-time location
+  var userMarker = null;
+  var accuracyCircle = null;
+
+  function onLocationFound(e) {
+    var radius = e.accuracy;
+
+    // Update marker position if it exists
+    if (userMarker) {
+      userMarker.setLatLng(e.latlng);
+      accuracyCircle.setLatLng(e.latlng).setRadius(radius);
     } else {
-      alert("Geolocation is not supported by your browser.");
-    }
+      userMarker = L.marker(e.latlng).addTo(map)
+        .bindPopup("You are here").openPopup();
 
-  </script>
+      accuracyCircle = L.circle(e.latlng, {
+        color: 'blue',
+        fillColor: '#03f',
+        fillOpacity: 0.2,
+        radius: radius
+      }).addTo(map);
+    }
+  }
+
+  function onLocationError(e) {
+    alert("Location error: " + e.message);
+  }
+
+  map.on('locationfound', onLocationFound);
+  map.on('locationerror', onLocationError);
+
+  // Locate user and track continuously
+  map.locate({setView: true, maxZoom: 19, watch: true});
+
+</script>
+
 </body>
 </html>
