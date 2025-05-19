@@ -12,13 +12,13 @@ st.title("📍 Bulacan State University Malolos Campus Map")
 # Campus center
 campus_lat, campus_lon = 14.85806, 120.814
 
-# Define campus bounds (approximate)
+# Define campus bounds
 campus_bounds = [
     [14.8565, 120.8115],  # Southwest
     [14.8595, 120.8165]   # Northeast
 ]
 
-# Initialize map centered on campus
+# Initialize map
 m = folium.Map(
     location=[campus_lat, campus_lon],
     zoom_start=18,
@@ -26,10 +26,10 @@ m = folium.Map(
     max_bounds=True
 )
 
-# Fit map to campus bounds
+# Fit to bounds
 m.fit_bounds(campus_bounds)
 
-# Draw rectangle around campus boundary
+# Draw rectangle around campus
 folium.Rectangle(
     bounds=campus_bounds,
     color="#ff7800",
@@ -79,8 +79,16 @@ for b in buildings:
         icon=folium.Icon(color="orange", icon="info-sign")
     ).add_to(m)
 
-# Add locate control button
-plugins.LocateControl(auto_start=False).add_to(m)
+# Add locate control button with live marker and accuracy circle
+plugins.LocateControl(
+    auto_start=False,
+    flyTo=True,
+    keepCurrentZoomLevel=False,
+    showPopup=True,
+    drawCircle=True,
+    metric=True,
+    strings={"title": "Show me where I am!"}
+).add_to(m)
 
 # Display map in Streamlit
 st_folium(m, width=1200, height=750)
