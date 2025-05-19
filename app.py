@@ -1,45 +1,37 @@
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-from folium import plugins
 
-# Streamlit App Title
+# Page config
+st.set_page_config(page_title="Bulacan State University Malolos Campus Map", layout="wide")
+
+# Title
 st.title("Bulacan State University Malolos Campus Map")
 
-# Center of Bulacan State University Malolos Campus
-campus_center = [14.8443, 120.8111]
+# Campus coordinates
+campus_lat = 14.8581   # 14°51'29" N
+campus_lon = 120.8139  # 120°48'50" E
 
-# Create Folium map with Esri WorldImagery (satellite view)
-m = folium.Map(location=campus_center, zoom_start=18, tiles="Esri.WorldImagery")
+# Create map
+m = folium.Map(location=[campus_lat, campus_lon], zoom_start=18, tiles='Esri.WorldImagery')
 
-# Example markers for main buildings (you can add more if you like)
+# Add a marker for BulSU campus center
 folium.Marker(
-    location=[14.8445, 120.8113],
-    popup="Admin Building",
-    icon=folium.Icon(color="red", icon="info-sign")
+    [campus_lat, campus_lon],
+    popup="Bulacan State University - Malolos Campus",
+    tooltip="BulSU Main Campus",
+    icon=folium.Icon(color='red', icon='university', prefix='fa')
 ).add_to(m)
 
-folium.Marker(
-    location=[14.8448, 120.8110],
-    popup="College of Engineering",
-    icon=folium.Icon(color="blue", icon="graduation-cap", prefix='fa')
+# Add circle boundary (approx 200m radius)
+folium.Circle(
+    radius=200,
+    location=[campus_lat, campus_lon],
+    color="blue",
+    fill=True,
+    fill_opacity=0.2,
+    popup="Approx. campus area"
 ).add_to(m)
-
-folium.Marker(
-    location=[14.8446, 120.8107],
-    popup="College of Business",
-    icon=folium.Icon(color="green", icon="building", prefix='fa')
-).add_to(m)
-
-folium.Marker(
-    location=[14.8441, 120.8115],
-    popup="Library",
-    icon=folium.Icon(color="orange", icon="book", prefix='fa')
-).add_to(m)
-
-# Optional: add a minimap
-minimap = plugins.MiniMap(toggle_display=True)
-m.add_child(minimap)
 
 # Display map in Streamlit
-st_data = st_folium(m, width=725)
+st_folium(m, width=900, height=600)
