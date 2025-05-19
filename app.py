@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_folium import st_folium
 import folium
+from folium import plugins
 
 # Page config
 st.set_page_config(page_title="BulSU Campus Map", layout="wide")
@@ -8,11 +9,37 @@ st.set_page_config(page_title="BulSU Campus Map", layout="wide")
 # Title
 st.title("📍 Bulacan State University Malolos Campus Map")
 
-# Center map at BulSU Malolos Main Campus
-campus_lat, campus_lon = 14.85806, 120.814   # 14°51'29" N, 120°48'50" E
-m = folium.Map(location=[campus_lat, campus_lon], zoom_start=18, tiles="Esri.WorldImagery")
+# Campus center
+campus_lat, campus_lon = 14.85806, 120.814
 
-# Markers for campus buildings (approximate coordinates — replace with accurate values)
+# Define campus bounds (approximate)
+campus_bounds = [
+    [14.8565, 120.8115],  # Southwest
+    [14.8595, 120.8165]   # Northeast
+]
+
+# Initialize map centered on campus
+m = folium.Map(
+    location=[campus_lat, campus_lon],
+    zoom_start=18,
+    tiles="Esri.WorldImagery",
+    max_bounds=True
+)
+
+# Fit map to campus bounds
+m.fit_bounds(campus_bounds)
+
+# Draw rectangle around campus boundary
+folium.Rectangle(
+    bounds=campus_bounds,
+    color="#ff7800",
+    weight=2,
+    fill=True,
+    fill_opacity=0.05,
+    popup="BulSU Campus Area"
+).add_to(m)
+
+# Campus buildings
 buildings = [
     {"name": "Gate 1 (Main Gate)", "lat": 14.85723594755244, "lon": 120.8122796215916},
     {"name": "Gate 2", "lat": 14.857314970938278, "lon": 120.81431249226469},
@@ -44,6 +71,7 @@ buildings = [
     {"name": "CSSP Local Student Council, BulSU SG", "lat": 14.858852138074056, "lon": 120.81524482733796},
 ]
 
+# Add building markers
 for b in buildings:
     folium.Marker(
         location=[b["lat"], b["lon"]],
@@ -51,8 +79,8 @@ for b in buildings:
         icon=folium.Icon(color="orange", icon="info-sign")
     ).add_to(m)
 
-# Add locate control button (to get user's live location — via browser prompt)
-folium.plugins.LocateControl(auto_start=True).add_to(m)
+# Add locate control button
+plugins.LocateControl(auto_start=False).add_to(m)
 
-# Show map in Streamlit
-st_data = st_folium(m, width=1000, height=700)
+# Display map in Streamlit
+st_folium(m, width=1200, height=750)
