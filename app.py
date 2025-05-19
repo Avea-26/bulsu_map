@@ -1,45 +1,45 @@
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
+from folium import plugins
 
-st.title("Bulacan State University Campus Map")
+# Streamlit App Title
+st.title("Bulacan State University Malolos Campus Map")
 
-# Centered at BulSU Malolos
-bulsu_center = [14.8441, 120.8110]
+# Center of Bulacan State University Malolos Campus
+campus_center = [14.8443, 120.8111]
 
-# Create map instance
-m = folium.Map(location=bulsu_center, zoom_start=17, control_scale=True)
+# Create Folium map with Esri WorldImagery (satellite view)
+m = folium.Map(location=campus_center, zoom_start=18, tiles="Esri.WorldImagery")
 
-# Set max bounds (campus-only)
-m.fit_bounds([[14.8428, 120.8090], [14.8455, 120.8125]])
-
-# Optional: Disable panning outside campus
-m.options['maxBounds'] = [[14.8428, 120.8090], [14.8455, 120.8125]]
-
-# Add building markers (sample — you can add all campus buildings)
+# Example markers for main buildings (you can add more if you like)
 folium.Marker(
-    location=[14.84415, 120.81060],
-    popup="Rafael Palma Hall (RP)",
-    icon=folium.Icon(color='green', icon='university')
+    location=[14.8445, 120.8113],
+    popup="Admin Building",
+    icon=folium.Icon(color="red", icon="info-sign")
 ).add_to(m)
 
 folium.Marker(
-    location=[14.84478, 120.81088],
-    popup="Lorenzo Hall",
-    icon=folium.Icon(color='blue', icon='university')
+    location=[14.8448, 120.8110],
+    popup="College of Engineering",
+    icon=folium.Icon(color="blue", icon="graduation-cap", prefix='fa')
 ).add_to(m)
 
 folium.Marker(
-    location=[14.84390, 120.81110],
-    popup="College of Engineering (COE)",
-    icon=folium.Icon(color='red', icon='university')
+    location=[14.8446, 120.8107],
+    popup="College of Business",
+    icon=folium.Icon(color="green", icon="building", prefix='fa')
 ).add_to(m)
 
 folium.Marker(
-    location=[14.84425, 120.81175],
-    popup="University Library",
-    icon=folium.Icon(color='purple', icon='book')
+    location=[14.8441, 120.8115],
+    popup="Library",
+    icon=folium.Icon(color="orange", icon="book", prefix='fa')
 ).add_to(m)
 
-# Render map on Streamlit
-st_folium(m, width=800, height=600)
+# Optional: add a minimap
+minimap = plugins.MiniMap(toggle_display=True)
+m.add_child(minimap)
+
+# Display map in Streamlit
+st_data = st_folium(m, width=725)
