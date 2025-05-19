@@ -2,34 +2,44 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 
-# Title
 st.title("Bulacan State University Campus Map")
 
-# Create Folium map centered on BSU Malolos
-bsu_map = folium.Map(location=[14.8441, 120.8115], zoom_start=18)
+# Centered at BulSU Malolos
+bulsu_center = [14.8441, 120.8110]
 
-# Add markers
+# Create map instance
+m = folium.Map(location=bulsu_center, zoom_start=17, control_scale=True)
+
+# Set max bounds (campus-only)
+m.fit_bounds([[14.8428, 120.8090], [14.8455, 120.8125]])
+
+# Optional: Disable panning outside campus
+m.options['maxBounds'] = [[14.8428, 120.8090], [14.8455, 120.8125]]
+
+# Add building markers (sample — you can add all campus buildings)
 folium.Marker(
-    [14.8441, 120.8115],
-    popup='Bulacan State University - Main Gate',
-    icon=folium.Icon(color='red')
-).add_to(bsu_map)
+    location=[14.84415, 120.81060],
+    popup="Rafael Palma Hall (RP)",
+    icon=folium.Icon(color='green', icon='university')
+).add_to(m)
 
 folium.Marker(
-    [14.8445, 120.8117],
-    popup='College of ICT (CICT)',
-    icon=folium.Icon(color='blue')
-).add_to(bsu_map)
+    location=[14.84478, 120.81088],
+    popup="Lorenzo Hall",
+    icon=folium.Icon(color='blue', icon='university')
+).add_to(m)
 
 folium.Marker(
-    [14.8437, 120.8113],
-    popup='University Library',
-    icon=folium.Icon(color='green')
-).add_to(bsu_map)
+    location=[14.84390, 120.81110],
+    popup="College of Engineering (COE)",
+    icon=folium.Icon(color='red', icon='university')
+).add_to(m)
 
-# Restrict map bounds to the campus
-bounds = [[14.8432, 120.8105], [14.8450, 120.8125]]
-bsu_map.fit_bounds(bounds)
+folium.Marker(
+    location=[14.84425, 120.81175],
+    popup="University Library",
+    icon=folium.Icon(color='purple', icon='book')
+).add_to(m)
 
-# Display map inside Streamlit app
-st_folium(bsu_map, width=700, height=500)
+# Render map on Streamlit
+st_folium(m, width=800, height=600)
