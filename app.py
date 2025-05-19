@@ -9,37 +9,11 @@ st.set_page_config(page_title="BulSU Campus Map", layout="wide")
 # Title
 st.title("📍 Bulacan State University Malolos Campus Map")
 
-# Campus center
+# Center map at BulSU Malolos Main Campus
 campus_lat, campus_lon = 14.85806, 120.814
+m = folium.Map(location=[campus_lat, campus_lon], zoom_start=18, tiles="Esri.WorldImagery")
 
-# Define campus bounds
-campus_bounds = [
-    [14.8565, 120.8115],  # Southwest
-    [14.8595, 120.8165]   # Northeast
-]
-
-# Initialize map
-m = folium.Map(
-    location=[campus_lat, campus_lon],
-    zoom_start=18,
-    tiles="Esri.WorldImagery",
-    max_bounds=True
-)
-
-# Fit to bounds
-m.fit_bounds(campus_bounds)
-
-# Draw rectangle around campus
-folium.Rectangle(
-    bounds=campus_bounds,
-    color="#ff7800",
-    weight=2,
-    fill=True,
-    fill_opacity=0.05,
-    popup="BulSU Campus Area"
-).add_to(m)
-
-# Campus buildings
+# Markers for campus buildings (accurate coords you had earlier)
 buildings = [
     {"name": "Gate 1 (Main Gate)", "lat": 14.85723594755244, "lon": 120.8122796215916},
     {"name": "Gate 2", "lat": 14.857314970938278, "lon": 120.81431249226469},
@@ -71,24 +45,47 @@ buildings = [
     {"name": "CSSP Local Student Council, BulSU SG", "lat": 14.858852138074056, "lon": 120.81524482733796},
 ]
 
-# Add building markers
+# Add markers + labels
 for b in buildings:
-    folium.Marker(
+    # Small dot marker
+    folium.CircleMarker(
         location=[b["lat"], b["lon"]],
-        popup=b["name"],
-        icon=folium.Icon(color="orange", icon="info-sign")
+        radius=5,
+        color="#FF6600",
+        fill=True,
+        fill_color="#FF6600",
+        fill_opacity=1
     ).add_to(m)
 
-# Add locate control button with live marker and accuracy circle
-plugins.LocateControl(
-    auto_start=False,
-    flyTo=True,
-    keepCurrentZoomLevel=False,
-    showPopup=True,
-    drawCircle=True,
-    metric=True,
-    strings={"title": "Show me where I am!"}
+    # Label text beside marker
+    folium.Marker(
+        location=[b["lat"], b["lon"]],
+        icon=folium.DivIcon(
+            html=f"""
+                <div style="
+                    font-size:9pt;
+                    color:white;
+                    background-color: rgba(0,0,0,0.6);
+                    padding: 2px 4px;
+                    border-radius: 4px;
+                    white-space: nowrap;
+                ">
+                    {b["name"]}
+                </div>
+            """
+        )
+    ).add_to(m)
+
+# Optional: Add a 200m radius circle for campus boundary
+folium.Circle(
+    location=[campus_lat, campus_lon],
+    radius=200,
+    color="orange",
+    fill=False
 ).add_to(m)
 
+# User location control
+plugins.LocateControl(auto_start=True).add_to(m)
+
 # Display map in Streamlit
-st_folium(m, width=1200, height=750)
+st_data = st_folium(m, width=1000, height=700)
