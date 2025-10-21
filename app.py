@@ -1,128 +1,235 @@
 import streamlit as st
-from streamlit_folium import st_folium
 import folium
-from folium import plugins
-import json
+from streamlit_folium import st_folium
+from folium.plugins import LocateControl  # NEW IMPORT
+from fastkml import kml
+from shapely.geometry import LineString, Point, Polygon
+import pandas as pd
+import numpy as np
+import io
 
-# Page config
-st.set_page_config(page_title="BulSU Campus Map", layout="wide")
+# ============ Streamlit Page Setup ============
+st.set_page_config(page_title="BulSU Campus Interactive Map", layout="wide")
+st.title("📍 BulSU Interactive Map (Road-Following Logic Applied)")
 
-# Title
-st.title("Bulacan State University Malolos Campus Map")
+st.markdown("""
+This map now includes a **live location feature**. Click the **Target icon** ($\odot$) on the map to find your current position!
+***
+### 🛣️ Interactive Routing:
+* **Red Line (Road-Following):** Automatically draws the path from your KML file when the route between **Main Gate 1** and **BulSU Activity Center** is selected.
+* **Orange Line (Straight-Line):** Draws the straight-line path for all other routes.
+""")
 
-# Load buildings and paths data (replace 'data.json' with your actual file or endpoint)
-def load_data():
-    return {
-        "buildings": [
-            {"name": "Gate 1 (Main Gate)", "initials": "G1", "lat": 14.85723594755244, "lon": 120.8122796215916},
-            {"name": "Gate 2", "initials": "G2", "lat": 14.857314970938278, "lon": 120.81431249226469},
-            {"name": "Gate 3", "initials": "G3", "lat": 14.857962089418534, "lon": 120.81590374653345},
-            {"name": "Bulacan State University Heroes Park", "initials": "HP", "lat": 14.857859827168662, "lon": 120.81425777581251},
-            {"name": "Roxas Hall", "initials": "RH", "lat": 14.857390463137973, "lon": 120.8141302146359},
-            {"name": "Federizo Hall", "initials": "FH", "lat": 14.858092409454652, "lon": 120.81453338128564},
-            {"name": "CBA Building", "initials": "CBA", "lat": 14.858265418626708, "lon": 120.81390368960794},
-            {"name": "CIT Building", "initials": "CIT", "lat": 14.857678444483582, "lon": 120.812557298334},
-            {"name": "Admissions Office", "initials": "AO", "lat": 14.85787281781839, "lon": 120.81324939963862},
-            {"name": "Activity Center", "initials": "AC", "lat": 14.857236983842892, "lon": 120.81296440885298},
-            {"name": "McDonald's", "initials": "MD", "lat": 14.857496410205641, "lon": 120.812098312232},
-            {"name": "BSU Mini Rizal Park", "initials": "MRP", "lat": 14.857415748264787, "lon": 120.81321702036867},
-            {"name": "College of Nursing", "initials": "NUR", "lat": 14.856961206741117, "lon": 120.81345271593389},
-            {"name": "NSTP Building", "initials": "NSTP", "lat": 14.85690997538126, "lon": 120.81365345186897},
-            {"name": "College of Law", "initials": "LAW", "lat": 14.857716890878411, "lon": 120.81346297233067},
-            {"name": "College of Engineering", "initials": "ENG", "lat": 14.857546982943054, "lon": 120.8143091116688},
-            {"name": "College of Arts and Trades", "initials": "CAT", "lat": 14.857490424275298, "lon": 120.81406733541326},
-            {"name": "Science Research and Learning Center", "initials": "SRLC", "lat": 14.858234981834437, "lon": 120.81386159963195},
-            {"name": "College of Home Economics", "initials": "CHE", "lat": 14.858393758789967, "lon": 120.81324120258154},
-            {"name": "BulSU e-Library", "initials": "LIB", "lat": 14.85850320691184, "lon": 120.8137132784873},
-            {"name": "Office of the Registrars", "initials": "REG", "lat": 14.857715559437853, "lon": 120.81491671412424},
-            {"name": "Flores Hall", "initials": "FH", "lat": 14.857915377726254, "lon": 120.8151101681602},
-            {"name": "College of Architecture and Fine Arts", "initials": "CAFA", "lat": 14.85812252860069, "lon": 120.81471377704729},
-            {"name": "College of Physical Education, Recreation and Sport", "initials": "CPERS", "lat": 14.858254518437814, "lon": 120.8148427464029},
-            {"name": "Valencia Hall", "initials": "VH", "lat": 14.858223354178708, "lon": 120.81523155108302},
-            {"name": "College of Arts and Letters", "initials": "CAL", "lat": 14.858749479597106, "lon": 120.81496792254381},
-            {"name": "College of Social Sciences and Philosophy", "initials": "CSSP", "lat": 14.859150947267924, "lon": 120.81494516324304},
-            {"name": "CSSP Local Student Council, BulSU SG", "initials": "LSC", "lat": 14.858852138074056, "lon": 120.81524482733796}
-        ],
-        "paths": {
-            "CIT": [[14.85725513788879, 120.81227566193445], [14.857612907614383, 120.81272627302701], [14.857681609704008, 120.81268469878931]],
-            "CBA": [[14.85723594755244, 120.8122796215916], [14.85787281781839, 120.81324939963862], [14.858265418626708, 120.81390368960794]],
-            "ENG": [[14.85723594755244, 120.8122796215916], [14.85787281781839, 120.81324939963862], [14.857546982943054, 120.8143091116688]],
-            "NUR": [[14.85726550803233, 120.81227163862754], [14.857575315892026, 120.81275175402043], [14.85702051321428, 120.81333111113943]],
-            "LAW": [[14.85723594755244, 120.8122796215916], [14.85787281781839, 120.81324939963862], [14.857716890878411, 120.81346297233067]],
-            "CAFA": [[14.85723594755244, 120.8122796215916], [14.85787281781839, 120.81324939963862], [14.85812252860069, 120.81471377704729]],
-            "CPERS": [[14.85723594755244, 120.8122796215916], [14.85787281781839, 120.81324939963862], [14.858254518437814, 120.8148427464029]],
-            "CAL": [[14.85723594755244, 120.8122796215916], [14.85787281781839, 120.81324939963862], [14.858749479597106, 120.81496792254381]],
-            "CSSP": [[14.85723594755244, 120.8122796215916], [14.85787281781839, 120.81324939963862], [14.859150947267924, 120.81494516324304]],
-            "AC": [[14.85726550803233, 120.81227163862754], [14.857575315892026, 120.81275175402043], [14.857299210999242, 120.8129824239845]],
-            "LIB": [[14.857270483830009, 120.81224450339876], [14.858294533203825, 120.81357219679651]],
-            "CHE": [[14.857257521148588, 120.81225791444321], [14.85826601543889, 120.81343272193452]]
-        }
-    }
+# ============ KML Road Path Coordinates (Pre-loaded from your KML file) ============
+# This path is for "Directions from VR47+XCR... to Activity Center".
+# Coordinates from KML are (Lon, Lat, Alt), flipped to (Lat, Lon) for Folium.
+kml_road_coords_lonlat = [
+    (120.81229, 14.85719, 0), (120.81276, 14.8576, 0), (120.81301, 14.85782, 0), (120.8128, 14.85801, 0),
+    (120.81301, 14.85782, 0), (120.81276, 14.8576, 0), (120.81308, 14.85727, 0), (120.81276, 14.8576, 0),
+    (120.81301, 14.85782, 0), (120.81304, 14.85784, 0), (120.81351, 14.85825, 0), (120.81362, 14.85814, 0),
+    (120.81385, 14.85787, 0), (120.81418, 14.85814, 0), (120.81422, 14.85816, 0), (120.81423, 14.85816, 0),
+    (120.81424, 14.85815, 0), (120.81426, 14.85814, 0), (120.81427, 14.85813, 0), (120.81458, 14.85781, 0),
+    (120.81507, 14.85825, 0), (120.81544, 14.85856, 0), (120.81557, 14.85843, 0), (120.81598, 14.85795, 0),
+    (120.81515, 14.85724, 0), (120.81504, 14.85735, 0), (120.81496, 14.85745, 0), (120.8149, 14.85749, 0),
+    (120.81486, 14.85751, 0), (120.81482, 14.85752, 0), (120.81479, 14.85752, 0), (120.81475, 14.85751, 0),
+    (120.81472, 14.85749, 0), (120.81464, 14.85744, 0), (120.81439, 14.85727, 0), (120.81436, 14.8573, 0),
+    (120.81408, 14.85761, 0), (120.81422, 14.85746, 0), (120.81436, 14.8573, 0), (120.81439, 14.85727, 0),
+    (120.81464, 14.85744, 0), (120.81472, 14.85749, 0), (120.81475, 14.85751, 0), (120.81479, 14.85752, 0),
+    (120.81482, 14.85752, 0), (120.81486, 14.85751, 0), (120.8149, 14.85749, 0), (120.81496, 14.85745, 0),
+    (120.81504, 14.85735, 0), (120.81515, 14.85724, 0), (120.81598, 14.85795, 0), (120.81638, 14.85827, 0),
+    (120.81598, 14.85795, 0), (120.81515, 14.85724, 0), (120.81504, 14.85735, 0), (120.81496, 14.85745, 0),
+    (120.8149, 14.85749, 0), (120.81486, 14.85751, 0), (120.81482, 14.85752, 0), (120.81479, 14.85752, 0),
+    (120.81475, 14.85751, 0), (120.81472, 14.85749, 0), (120.81464, 14.85744, 0), (120.81439, 14.85727, 0),
+    (120.81436, 14.8573, 0), (120.81385, 14.85787, 0), (120.81362, 14.85814, 0), (120.81351, 14.85825, 0),
+    (120.81339, 14.8584, 0), (120.81336, 14.85844, 0), (120.81334, 14.85848, 0), (120.81334, 14.8585, 0),
+    (120.81334, 14.85852, 0), (120.81335, 14.85855, 0), (120.81336, 14.85856, 0), (120.81341, 14.85861, 0),
+    (120.81352, 14.85872, 0), (120.81341, 14.85861, 0), (120.81336, 14.85856, 0), (120.81335, 14.85855, 0),
+    (120.81334, 14.85852, 0), (120.81334, 14.8585, 0), (120.81334, 14.85848, 0), (120.81336, 14.85844, 0),
+    (120.81339, 14.8584, 0), (120.81351, 14.85825, 0), (120.81304, 14.85784, 0), (120.81301, 14.85782, 0),
+    (120.8128, 14.85801, 0), (120.81301, 14.85782, 0), (120.81304, 14.85784, 0), (120.81309, 14.8578, 0),
+    (120.81316, 14.85774, 0), (120.81309, 14.8578, 0), (120.81304, 14.85784, 0), (120.81301, 14.85782, 0),
+    (120.81276, 14.8576, 0), (120.81305, 14.85731, 0)
+]
+# Final list of coordinates for Folium in (Lat, Lon) format
+kml_road_coords = [(lat, lon) for lon, lat, alt in kml_road_coords_lonlat]
 
-data = load_data()
+# Define the names for the smart-routing feature
+KML_START_NAME = "Main Gate 1 (VR47+XCR)"
+KML_END_NAME = "BulSU Activity Center"
 
-# Center map at BulSU Malolos Main Campus
-campus_lat, campus_lon = 14.85806, 120.814
-m = folium.Map(location=[campus_lat, campus_lon], zoom_start=18, tiles=None)
+# ============ MARKERS WITH YOUR PROVIDED COORDINATES ============
+building_data_list = [
+    # (Name, Lat, Lon, Color, Icon)
+    # ACADEMIC & RESEARCH HALLS (Blue)
+    ("College of Social Sciences and Philosophy (CSSP)", 14.859139, 120.814932, "blue", "comment-dots"),
+    ("BuLSU College of Arts and Letters (CAL)", 14.858742, 120.815004, "blue", "book-open"),
+    ("College of Science (CS)", 14.858558, 120.814810, "blue", "flask"),
+    ("CPERS (Physical Education, Recreation and Sport)", 14.858314, 120.814929, "blue", "futbol"),
+    ("BuLSU College of Architecture and Fine Arts (CAFA)", 14.858110, 120.814670, "blue", "pencil-ruler"),
+    ("BuLSU College of Education (CoEd) - Roxas Hall", 14.857366, 120.814234, "blue", "school"),
+    ("BuLSU College of Engineering (CoE) - Natividad Hall", 14.857540, 120.814296, "blue", "cogs"),
+    ("College of Business Administration (CBA)", 14.858245, 120.813953, "blue", "briefcase"),
+    ("Bulsu College of Industrial Technology (CIT)", 14.857635, 120.812532, "blue", "tools"),
+    ("BuLSU Science Research and Learning Center", 14.858191, 120.813788, "blue", "microscope"),
+    ("BuLSU e-Library (Main Library)", 14.858503, 120.813680, "blue", "book"),
+    ("BuLSU Laboratory High School (LHS Quadrangle)", 14.857892, 120.813756, "blue", "graduation-cap"),
 
-# Add tile layers
-folium.TileLayer('OpenStreetMap', name='Map View').add_to(m)
-folium.TileLayer('Esri.WorldImagery', name='Satellite View').add_to(m)
+    # ADMINISTRATION & FACILITIES (Green)
+    (KML_START_NAME, 14.857194, 120.812285, "darkgreen", "archway"),  # Main Gate 1
+    (KML_END_NAME, 14.857309, 120.813046, "darkgreen", "star"),  # Activity Center
+    ("BuLSU Office of the Student Government", 14.858442, 120.815159, "darkgreen", "users"),
+    ("CSSP Local Student Council, BuLSU SG", 14.858847, 120.815316, "darkgreen", "user-tie"),
+    ("BuLSU Valencia Hall (Gymnasium)", 14.858245, 120.815233, "darkgreen", "dumbbell"),
+    ("BuLSU Flores Hall", 14.857911, 120.815090, "darkgreen", "building"),
+    ("BuLSU Admissions Office", 14.857870, 120.813270, "darkgreen", "clipboard"),
+    ("BuLSU Hostel", 14.858643, 120.813355, "darkgreen", "bed"),
+    ("University Canteen", 14.858313, 120.815551, "darkred", "cutlery"),
+    ("BuLSU NSTP Building", 14.856889, 120.813646, "darkgreen", "shield-alt"),
+    ("Pimentel Hall", 14.856951, 120.813400, "darkgreen", "door-open"),
+    ("CURSOR Publication", 14.857175, 120.813651, "darkgreen", "newspaper"),
+    ("Bulacan State University Main Parking Space", 14.857525, 120.813437, "darkgreen", "parking"),
+    ("BSU Mini Rizal Park", 14.857458, 120.813203, "darkgreen", "tree"),
+    ("BuLSU Tennis Court", 14.858208, 120.813048, "darkgreen", "tennis-ball"),
 
-# Add campus boundary
-folium.Circle(
-    location=[campus_lat, campus_lon],
-    radius=200,
-    color="orange",
-    fill=True,
-    fill_opacity=0.2,
-    popup="Campus Boundary"
+    # NEARBY LANDMARKS (Red)
+    ("Bulacan Provincial Blood Center (Nearby)", 14.859200, 120.815100, "red", "heart"),
+    ("The Engineers Publication (Natividad Hall)", 14.857540, 120.814296, "red", "pen-nib"),
+]
+
+# Convert to DataFrame for easy lookups
+df_buildings = pd.DataFrame(building_data_list, columns=['name', 'lat', 'lon', 'color', 'icon'])
+building_names = sorted(df_buildings['name'].unique().tolist())
+
+# ============ MAP SETUP ============
+campus_lat = 14.8580
+campus_lon = 120.8160
+# Initialize the map
+m = folium.Map(location=[campus_lat, campus_lon], zoom_start=18, control_scale=True)
+
+# Add Satellite and Street View layers
+folium.TileLayer(tiles='https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', attr='Google Satellite',
+                 name='Google Satellite View', subdomains=['mt0', 'mt1', 'mt2', 'mt3']).add_to(m)
+folium.TileLayer(tiles='https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', attr='Google Maps',
+                 name='Google Street View', subdomains=['mt0', 'mt1', 'mt2', 'mt3']).add_to(m)
+
+# === NEW: ADD LIVE LOCATION CONTROL ===
+# This adds the target icon (LocateControl) to the map
+LocateControl(
+    auto_start=False,
+    position='topleft',
+    strings={"title": "Show my location"},
+    locateOptions={'enableHighAccuracy': True}
 ).add_to(m)
 
-# Enable user location control
-plugins.LocateControl(auto_start=True).add_to(m)
+# ============ INTERACTIVE SIDEBAR FOR PATHWAYS ============
+st.sidebar.header("🗺️ Find Your Route")
 
-# Add building markers
-def add_building_markers(map_object, buildings):
-    for building in buildings:
-        folium.Marker(
-            location=[building["lat"], building["lon"]],
-            popup=f"<b>{building['name']}</b>",
-            icon=folium.DivIcon(
-                html=f"""
-                <div style="font-size:12px; font-weight:bold; color:white;
-                -webkit-text-stroke: 1px black; background:rgba(0,0,0,0.6);
-                padding:4px 6px; border-radius:4px; text-align:center;">
-                {building['initials']}</div>"""
-            )
-        ).add_to(map_object)
+start_location = st.sidebar.selectbox("Starting Location", building_names, index=building_names.index(
+    KML_START_NAME) if KML_START_NAME in building_names else 0)
+end_location = st.sidebar.selectbox("Destination", [name for name in building_names if name != start_location],
+                                    index=building_names.index(
+                                        KML_END_NAME) - 1 if KML_END_NAME in building_names else 0)
 
-add_building_markers(m, data["buildings"])
+# ============ PATH CALCULATION AND DISPLAY (Smart Routing) ============
 
-# UI Controls
-col1, col2 = st.columns([3, 1])
-with col1:
-    selected = st.selectbox("Select a Department to Trace Path", ["None"] + list(data["paths"].keys()))
-with col2:
-    reset = st.button("Reset View")
+if start_location and end_location:
 
-# Highlight path if selected
-def highlight_path(map_object, path_coordinates, label):
-    folium.PolyLine(path_coordinates, color="red", weight=6, opacity=0.9, tooltip=f"Path to {label}").add_to(map_object)
-    for point in path_coordinates:
-        folium.CircleMarker(point, radius=5, color="red", fill=True, fill_opacity=0.7).add_to(map_object)
+    # Check if the selection matches the known KML road path (in either direction)
+    route_pair = tuple(sorted((start_location, end_location)))
+    kml_pair = tuple(sorted((KML_START_NAME, KML_END_NAME)))
+    is_kml_route = (route_pair == kml_pair)
 
-if selected != "None":
-    highlight_path(m, data["paths"][selected], selected)
-    m.fit_bounds(data["paths"][selected])
+    if is_kml_route:
+        # --- Draw the Road-Following KML Path (Red Line) ---
+        route_coords = kml_road_coords
+        route_weight = 6
 
-# Reset view
-if reset:
-    m.location = [campus_lat, campus_lon]
-    m.zoom_start = 18
+        # Reverse coordinates if the user chose the opposite direction
+        if start_location == KML_END_NAME:
+            route_coords = route_coords[::-1]
 
-# Map controls
-folium.LayerControl().add_to(m)
+        folium.PolyLine(
+            route_coords,
+            color="red",
+            weight=route_weight,
+            opacity=0.9,
+            tooltip=f"ROAD ROUTE: {start_location} to {end_location} (From KML File)"
+        ).add_to(m)
+        st.sidebar.success(f"**Road-following route** found and drawn in **Red!**")
 
-# Display map
-st_folium(m, width=1000, height=700)
+    else:
+        # --- Draw the Straight-Line Path (Orange Line) ---
+        start_data = df_buildings[df_buildings['name'] == start_location].iloc[0]
+        end_data = df_buildings[df_buildings['name'] == end_location].iloc[0]
+        start_coords = (start_data['lat'], start_data['lon'])
+        end_coords = (end_data['lat'], end_data['lon'])
+        path_coordinates = [start_coords, end_coords]
+
+        # Simple Euclidean distance approximation
+        distance_approx = np.sqrt((end_coords[0] - start_coords[0]) ** 2 + (end_coords[1] - start_coords[1]) ** 2)
+
+        folium.PolyLine(
+            path_coordinates,
+            color="orange",
+            weight=5,
+            opacity=0.8,
+            tooltip=f"STRAIGHT-LINE ROUTE: {start_location} to {end_location}"
+        ).add_to(m)
+
+        st.sidebar.info(f"**Straight line** (Orange) is drawn. **Distance:** ≈ {distance_approx:.4f} degrees.")
+
+# ============ ADD ALL BUILDING MARKERS ============
+for index, row in df_buildings.iterrows():
+    folium.Marker(
+        location=[row['lat'], row['lon']],
+        popup=f"<b>{row['name']}</b><br>Lat: {row['lat']:.6f}, Lon: {row['lon']:.6f}",
+        tooltip=row['name'],
+        icon=folium.Icon(color=row['color'], icon=row['icon'], prefix="fa")
+    ).add_to(m)
+
+# ============ KML PATH UPLOAD (For other custom road-following paths) ============
+st.sidebar.markdown("---")
+st.sidebar.header("⬆️ Upload Other Road Paths (KML/GeoJSON)")
+st.sidebar.caption("Upload a file to add a **Dark Red** custom road trace.")
+uploaded_file = st.sidebar.file_uploader("Choose a .kml file or .geojson", type=["kml", "geojson"])
+
+if uploaded_file is not None:
+    file_color = "darkred"
+    try:
+        if uploaded_file.name.endswith('.kml'):
+            kml_content = uploaded_file.read()
+            k = kml.KML()
+            k.from_string(kml_content)
+
+            features = list(k.features())
+            if features:
+                document = features[0]
+                line_count = 0
+                for feature in document.features():
+                    if isinstance(feature.geometry, LineString):
+                        # KML coordinates are (Lon, Lat, Alt) -> flip to (Lat, Lon)
+                        coords = [(coord[1], coord[0]) for coord in feature.geometry.coords]
+                        folium.PolyLine(coords, color=file_color, weight=6, opacity=0.9,
+                                        tooltip=f"Custom KML Path: {feature.name}").add_to(m)
+                        line_count += 1
+
+                if line_count > 0:
+                    st.sidebar.info(f"{line_count} custom KML path(s) loaded successfully.")
+                else:
+                    st.sidebar.warning("KML file uploaded, but no LineString paths were found within it.")
+
+        elif uploaded_file.name.endswith('.geojson'):
+            geojson_data = uploaded_file.read().decode('utf-8')
+            folium.GeoJson(
+                geojson_data,
+                name='Custom GeoJSON Path',
+                style_function=lambda x: {'color': file_color, 'weight': 6}
+            ).add_to(m)
+            st.sidebar.info("GeoJSON path loaded successfully.")
+
+    except Exception as e:
+        st.sidebar.error(f"Error loading file. Check file format: {e}")
+
+# ============ Add Layer Control and Display Map ============
+folium.LayerControl(collapsed=False).add_to(m)
+st_data = st_folium(m, width=1200, height=700)
