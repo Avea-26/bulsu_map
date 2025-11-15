@@ -1,52 +1,55 @@
 import qrcode
 from PIL import Image
 import os
+import io
 
-# Define the URL of the Streamlit app
-url = "https://bulsumap-twhdea9bacsvy6jajyfxpk.streamlit.app"  # Replace with your local IP
+# Define the URL and logo filename (assuming bulsu_logo.png is in the same folder)
+TEST_URL = "https://bulsumap-jn5ug9fabhwkxkgzsmh692.streamlit.app"
+LOGO_FILENAME = "bulsu_logo.png"
 
-# Create a QR code instance
-qr = qrcode.QRCode(
-    version=1,
-    box_size=10,
-    border=5,
-)
-qr.add_data(url)
-qr.make(fit=True)
 
-# Generate an image from the QR code instance
-qr_img = qr.make_image(fill="black", back_color="white").convert("RGB")
+def generate_qr_standalone(data_url, logo_filename):
+    """
+    Generates a QR code and saves it to a file.
+    Note: This is a simplified version for local testing, not for Streamlit.
+    """
+    try:
+        # 1. Create QR Code instance (Requires the real qrcode library)
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(data_url)
+        qr.make(fit=True)
 
-# Path to the logo
-logo_path = r"C:\Users\chris\OneDrive\Desktop\bulsu_map\bulsu_logo.png"
+        qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
 
-# Debugging: Check if logo file exists
-if not os.path.exists(logo_path):
-    raise FileNotFoundError(f"Logo file not found at {logo_path}")
+        output_filename = "bulsu_map_qr.png"
 
-# Load the logo
-logo = Image.open(logo_path)
+        # 2. Handle Logo (Simplified path check)
+        if os.path.exists(logo_filename):
+            try:
+                logo = Image.open(logo_filename).convert('RGBA')
+                qr_width, _ = qr_img.size
+                logo_size = qr_width // 4
+                logo = logo.resize((logo_size, logo_size), Image.Resampling.LANCZOS)
 
-# Ensure the logo has an alpha channel
-if logo.mode != "RGBA":
-    logo = logo.convert("RGBA")
+                pos = ((qr_width - logo_size) // 2, (qr_img.size[1] - logo_size) // 2)
+                qr_img.paste(logo, pos, mask=logo)
+                print(f"QR Code generated with logo and saved as {output_filename}")
+            except Exception as e:
+                print(f"Warning: Could not embed logo: {e}. Saving QR without logo.")
+        else:
+            print(f"Warning: Logo file '{logo_filename}' not found. Saving QR without logo.")
 
-# Resize the logo to fit better within the QR code
-qr_size = qr_img.size[0]  # Assuming the QR code is square
-logo_size = qr_size // 10  # Adjust the size as necessary (1/6 of QR code size)
-logo = logo.resize((logo_size, logo_size), Image.Resampling.LANCZOS)
+        # 3. Save the final image to a file
+        qr_img.save(output_filename)
 
-# Create a mask from the logo's alpha channel
-logo_mask = logo.split()[3]  # Extract the alpha channel
+    except Exception as e:
+        print(f"Failed to generate QR code: {e}")
 
-# Calculate the position to overlay the logo (centered)
-pos = ((qr_img.size[0] - logo_size) // 2, (qr_img.size[1] - logo_size) // 2)
 
-# Overlay the logo on the QR code using the mask
-qr_img.paste(logo, pos, mask=logo_mask)
-
-# Save the QR code with the logo
-output_file = "bulsu_map_qr_with_logo_fixed.png"
-qr_img.save(output_file)
-
-print(f"✅ QR code with logo generated and saved as {output_file}")
+if __name__ == "__main__":
+    generate_qr_standalone(TEST_URL, LOGO_FILENAME)
