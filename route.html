@@ -1,10 +1,350 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Route Map</title>
+    <!-- Load Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Apply the Inter font and ensure full-screen layout */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f7f9fc;
+        }
+
+        /* The map container needs a defined height */
+        #map {
+            height: 75vh; /* 75% of the viewport height */
+            width: 100%;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Styling for the info box */
+        #info-box {
+            max-height: 25vh;
+            overflow-y: auto;
+        }
+
+        /* Custom styles to make the OpenLayers map look clean */
+        .ol-control button, .ol-control button:hover {
+            background-color: #4f46e5; /* Indigo */
+            color: white;
+            border-radius: 0.375rem;
+        }
+    </style>
+    <!-- Load OpenLayers Library -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
 </head>
-<body>
-$END$
+<body class="p-4 md:p-8">
+
+    <header class="mb-6">
+        <h1 class="text-3xl font-extrabold text-indigo-700">Campus Pathways Guide</h1>
+        <p class="text-gray-600">Interactive map showing the route to the NSTP Building.</p>
+    </header>
+
+    <!-- Map Container -->
+    <div id="map" class="mb-6"></div>
+
+    <!-- Info/Status Box -->
+    <div id="info-box" class="bg-white p-4 rounded-lg shadow-lg border-t-4 border-indigo-500">
+        <h2 class="text-xl font-semibold text-indigo-600 mb-2">Map Status</h2>
+        <p id="status-message" class="text-gray-700">Initializing map and loading route data...</p>
+    </div>
+
+    <script>
+        // --- 1. KML Data Extraction ---
+        // The KML content from your 'Untitled map (2).kml' file.
+        const kmlString = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Untitled map</name>
+    <description/>
+    <Style id="icon-1899-0288D1-nodesc-normal">
+      <IconStyle>
+        <color>ffd18802</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="icon-1899-0288D1-nodesc-highlight">
+      <IconStyle>
+        <color>ffd18802</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>1</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="line-1267FF-5000-nodesc">
+      <LineStyle>
+        <color>ffff6712</color>
+        <width>5</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>00ffffff</color>
+      </PolyStyle>
+    </Style>
+    <Style id="icon-1899-DB4436-nodesc">
+      <IconStyle>
+        <color>ff3644db</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Placemark>
+      <name>Federizo Hall</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8163769,14.8582716,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>CBA Building</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8135223,14.8587155,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>CIT Building</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8128033,14.8580142,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Admissions Office</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8122345,14.8576402,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Gate 1</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.812168,14.8572111,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>BulSU NSTP Building</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.81307,14.85686,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Directions from gate 1 to BulSU NSTP Building</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81232,14.85723,0
+          120.81276,14.8576,0
+          120.81331,14.85704,0
+          120.81314,14.8569,0
+          120.81313,14.85689,0
+          120.81312,14.85688,0
+          120.81312,14.85687,0
+          120.81311,14.85686,0
+          120.81311,14.85685,0
+          120.81311,14.85684,0
+          120.81312,14.85683,0
+          120.81312,14.85682,0
+          120.81314,14.85681,0
+          120.81327,14.85667,0
+          120.81336,14.85658,0
+          120.81347,14.85648,0
+          120.81358,14.85638,0
+          120.81368,14.8563,0
+          120.81373,14.85626,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>`;
+
+
+        window.onload = function () {
+            const statusMessage = document.getElementById('status-message');
+
+            try {
+                // The coordinates for the center of your map (Bulacan State University area)
+                const centerCoordinates = [120.813, 14.857];
+                const zoomLevel = 18;
+
+                // --- 2. Create Vector Source and Load KML ---
+                const kmlFormat = new ol.format.KML({
+                    // Setting extractStyles to false and managing styles in the layer often gives better control
+                    extractStyles: false
+                });
+
+                const kmlSource = new ol.source.Vector({
+                    // Use a string reader to process the KML data from the variable
+                    features: kmlFormat.readFeatures(kmlString, {
+                        // KML uses WGS84 (EPSG:4326), map uses Web Mercator (EPSG:3857)
+                        dataProjection: 'EPSG:4326',
+                        featureProjection: 'EPSG:3857'
+                    })
+                });
+
+                // Get the extent (bounding box) of the features to zoom in correctly
+                const extent = kmlSource.getExtent();
+
+                // --- 3. Initialize the Map ---
+                const map = new ol.Map({
+                    target: 'map',
+                    layers: [
+                        // Base Map Layer (OpenStreetMap)
+                        new ol.layer.Tile({
+                            source: new ol.source.OSM(),
+                            visible: true,
+                            title: 'OSM'
+                        }),
+                        // Vector Layer for the KML data
+                        new ol.layer.Vector({
+                            source: kmlSource,
+                            title: 'Campus Route',
+                            // Define a style function that forces the LineString to be visible
+                            style: function(feature) {
+                                // Check if the feature is the pathway (a LineString)
+                                if (feature.getGeometry().getType() === 'LineString') {
+                                    // This style FORCES the pathway to be a thick, visible blue line
+                                    return new ol.style.Style({
+                                        stroke: new ol.style.Stroke({
+                                            color: '#4F46E5', // Indigo Blue, matching the theme
+                                            width: 6,
+                                            lineDash: [10, 5] // Make it slightly dashed for better visibility
+                                        })
+                                    });
+                                }
+
+                                // Default style for points (e.g., buildings/landmarks)
+                                return new ol.style.Style({
+                                    image: new ol.style.Circle({
+                                        radius: 8,
+                                        fill: new ol.style.Fill({ color: '#DB4436' }), // Red color for points
+                                        stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
+                                    }),
+                                    text: new ol.style.Text({
+                                        text: feature.get('name'),
+                                        font: 'bold 14px Inter',
+                                        fill: new ol.style.Fill({ color: '#000' }),
+                                        stroke: new ol.style.Stroke({ color: '#fff', width: 4 }),
+                                        offsetY: -15
+                                    })
+                                });
+                            }
+                        })
+                    ],
+                    view: new ol.View({
+                        center: ol.proj.fromLonLat(centerCoordinates),
+                        zoom: zoomLevel
+                    })
+                });
+
+                // --- 4. Adjust View to Fit Route ---
+                // If we found features, zoom the map to fit their extent
+                if (!ol.extent.isEmpty(extent)) {
+                    map.getView().fit(extent, {
+                        padding: [50, 50, 50, 50], // Add some padding around the extent
+                        duration: 1000 // Smooth animation
+                    });
+                }
+
+
+                // --- 5. Add Pop-up Interaction ---
+                const element = document.createElement('div');
+                element.className = 'bg-indigo-600 text-white p-2 rounded-lg shadow-xl text-sm font-medium border-2 border-indigo-200 whitespace-nowrap';
+
+                const overlay = new ol.Overlay({
+                    element: element,
+                    autoPan: {
+                        animation: {
+                            duration: 250,
+                        },
+                    },
+                    offset: [0, -15] // Adjust vertical offset for the marker
+                });
+                map.addOverlay(overlay);
+
+                map.on('singleclick', function (event) {
+                    let featureFound = false;
+                    map.forEachFeatureAtPixel(event.pixel, function (feature) {
+                        const featureName = feature.get('name');
+                        // Only show popup for point features (buildings/landmarks)
+                        if (featureName && feature.getGeometry().getType() === 'Point') {
+                            const coordinate = feature.getGeometry().getCoordinates();
+                            element.textContent = featureName;
+                            overlay.setPosition(coordinate);
+                            featureFound = true;
+                            return true; // Stop processing features once one is found
+                        }
+                    }, {
+                        // Limit hit detection to the vector layer (index 1)
+                        layerFilter: function(layer) {
+                            return layer === map.getLayers().item(1);
+                        }
+                    });
+
+                    if (!featureFound) {
+                        overlay.setPosition(undefined); // Hide the popup if nothing is clicked
+                    }
+                });
+
+                // Update status message
+                statusMessage.innerHTML = 'Map and **route loaded successfully**. Click on a building marker to see its name. The route is shown as a dashed blue line.';
+
+            } catch (error) {
+                console.error("Map Initialization Error:", error);
+                statusMessage.innerHTML = `<span class="text-red-500">Error loading map: ${error.message}. Check the console for details.</span>`;
+            }
+        };
+    </script>
 </body>
 </html>

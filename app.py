@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 # --- 0. UTILITY FUNCTIONS & KML GRAPH CONSTRUCTION ---
 # ==============================================================================
 
-# KML Content (Full content provided by the user in Untitled map (1).kml)
+# KML Content (Updated to use the data from Untitled map (2).kml)
 KML_CONTENT = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
@@ -127,6 +127,34 @@ KML_CONTENT = """<?xml version="1.0" encoding="UTF-8"?>
       <Pair>
         <key>highlight</key>
         <styleUrl>#line-000000-5-nodesc-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="line-1267FF-5000-nodesc-normal">
+      <LineStyle>
+        <color>ff67ff12</color>
+        <width>5</width>
+      </LineStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="line-1267FF-5000-nodesc-highlight">
+      <LineStyle>
+        <color>ff67ff12</color>
+        <width>7</width>
+      </LineStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <StyleMap id="line-1267FF-5000-nodesc">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#line-1267FF-5000-nodesc-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#line-1267FF-5000-nodesc-highlight</styleUrl>
       </Pair>
     </StyleMap>
     <Placemark>
@@ -283,106 +311,310 @@ KML_CONTENT = """<?xml version="1.0" encoding="UTF-8"?>
       </Point>
     </Placemark>
     <Placemark>
-      <name>Line</name>
-      <styleUrl>#line-000000-5-nodesc</styleUrl>
+      <name>NSTP</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8128336,14.8566904,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Gate 1 to Admissions Office</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
       <LineString>
         <tessellate>1</tessellate>
         <coordinates>
-          120.812328,14.857242,0
-          120.812629,14.857247,0
-          120.812822,14.857621,0
-          120.812702,14.857867,0
-          120.813088,14.857896,0
-          120.813353,14.858003,0
-          120.813498,14.858348,0
-          120.813955,14.858718,0
-          120.81412,14.858709,0
-          120.814238,14.859781,0
+          120.81232,14.85723,0
+          120.81242,14.85727,0
+          120.8126,14.85761,0
+          120.8128,14.8579,0
+          120.81306,14.85834,0
         </coordinates>
       </LineString>
     </Placemark>
     <Placemark>
-      <name>Line 2</name>
-      <styleUrl>#line-000000-5-nodesc</styleUrl>
+      <name>Directions from Admissions Office to Law Building</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
       <LineString>
         <tessellate>1</tessellate>
         <coordinates>
-          120.813364,14.857321,0
-          120.813636,14.857321,0
-          120.813876,14.857436,0
-          120.813955,14.857662,0
-          120.813936,14.857777,0
-          120.813936,14.858043,0
-          120.813955,14.858296,0
-          120.813735,14.858522,0
-          120.813522,14.858716,0
+          120.81306,14.85834,0
+          120.81333,14.85787,0
         </coordinates>
       </LineString>
     </Placemark>
     <Placemark>
-      <name>Line 3</name>
-      <styleUrl>#line-000000-5-nodesc</styleUrl>
+      <name>Directions from Law Building to CIT Building</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
       <LineString>
         <tessellate>1</tessellate>
         <coordinates>
-          120.813936,14.857185,0
-          120.81421,14.857218,0
-          120.814349,14.857501,0
-          120.814387,14.857777,0
-          120.814526,14.85804,0
-          120.81484,14.858348,0
-          120.814781,14.858435,0
+          120.81333,14.85787,0
+          120.81282,14.85798,0
         </coordinates>
       </LineString>
     </Placemark>
     <Placemark>
-      <name>Line 4</name>
-      <styleUrl>#line-000000-5-nodesc</styleUrl>
+      <name>Directions from Admissions Office to HRM Building</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
       <LineString>
         <tessellate>1</tessellate>
         <coordinates>
-          120.814526,14.858043,0
-          120.815044,14.858296,0
-          120.815201,14.858223,0
-          120.815664,14.858296,0
-          120.816075,14.858384,0
-          120.81639,14.858272,0
+          120.81306,14.85834,0
+          120.8131,14.85859,0
         </coordinates>
       </LineString>
     </Placemark>
     <Placemark>
-      <name>Line 5</name>
-      <styleUrl>#line-000000-5-nodesc</styleUrl>
+      <name>Directions from HRM Building to CBA Building</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
       <LineString>
         <tessellate>1</tessellate>
         <coordinates>
-          120.815664,14.858086,0
-          120.815857,14.858025,0
-          120.815957,14.857962,0
+          120.8131,14.85859,0
+          120.81352,14.85872,0
         </coordinates>
       </LineString>
     </Placemark>
     <Placemark>
-      <name>Line 6</name>
-      <styleUrl>#line-000000-5-nodesc</styleUrl>
+      <name>Directions from CBA Building to Library</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
       <LineString>
         <tessellate>1</tessellate>
         <coordinates>
-          120.814349,14.857501,0
-          120.814402,14.857777,0
-          120.814526,14.858043,0
+          120.81352,14.85872,0
+          120.81395,14.85881,0
         </coordinates>
       </LineString>
     </Placemark>
     <Placemark>
-      <name>Line 7</name>
-      <styleUrl>#line-000000-5-nodesc</styleUrl>
+      <name>Directions from CBA Building to Gate 4</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
       <LineString>
         <tessellate>1</tessellate>
         <coordinates>
-          120.815162,14.858407,0
-          120.815456,14.858686,0
-          120.81577,14.858639,0
+          120.81352,14.85872,0
+          120.81423,14.85978,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from CBA Building to CS</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81352,14.85872,0
+          120.81373,14.85852,0
+          120.81395,14.85829,0
+          120.81424,14.85804,0
+          120.81453,14.85804,0
+          120.81478,14.85843,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Law Building to COED</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81333,14.85787,0
+          120.81364,14.85732,0
+          120.81412,14.85744,0
+          120.81435,14.8575,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from COED to Gate 2</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81435,14.8575,0
+          120.81435,14.85732,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from COED to NSTP</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81435,14.8575,0
+          120.81415,14.85722,0
+          120.81394,14.85719,0
+          120.81358,14.85721,0
+          120.81329,14.85721,0
+          120.81316,14.85718,0
+          120.81298,14.85703,0
+          120.81283,14.85669,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from COED to SAO/REG</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81435,14.8575,0
+          120.8144,14.85778,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from SAO/REG to Admin/Registrar</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.8144,14.85778,0
+          120.81453,14.85804,0
+          120.81492,14.85818,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Admin/Registrar to Clinic</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81492,14.85818,0
+          120.8152,14.85804,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Clinic to ORES/CAL/CANTEEN</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.8152,14.85804,0
+          120.81566,14.85809,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from ORES/CAL/CANTEEN to Federizo Hall</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81566,14.85809,0
+          120.81607,14.85838,0
+          120.81639,14.85827,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from ORES/CAL/CANTEEN to Gate 3</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81566,14.85809,0
+          120.81596,14.85796,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from ORES/CAL/CANTEEN to CAFA</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81566,14.85809,0
+          120.81516,14.85841,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from CAFA to CS</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81516,14.85841,0
+          120.81478,14.85843,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Gate 1 to AC</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81232,14.85723,0
+          120.81263,14.85725,0
+          120.81269,14.85764,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from AC to CIT</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81269,14.85764,0
+          120.8127,14.85787,0
+          120.8128,14.85801,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Law Building to NURSING</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81333,14.85787,0
+          120.81314,14.85732,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>NSTP to NURSING</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81283,14.85669,0
+          120.8129,14.8568,0
+          120.81302,14.85702,0
+          120.81314,14.85732,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>NURSING to Eng'g</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81314,14.85732,0
+          120.81388,14.85744,0
+          120.81422,14.85746,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>NSTP to AC</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81283,14.85669,0
+          120.81277,14.85675,0
+          120.81267,14.85695,0
+          120.81269,14.85764,0
         </coordinates>
       </LineString>
     </Placemark>
@@ -405,6 +637,10 @@ def haversine(lat1, lon1, lat2, lon2):
 def dijkstra(graph, start_node, end_node):
     # Initialize distances and path tracking
     distances = {node: float('infinity') for node in graph['adj']}
+    if start_node not in distances:
+        # Handle case where start node is not in the adjacency list (disconnected or missing)
+        return [], float('infinity')
+
     distances[start_node] = 0
     previous_nodes = {node: None for node in graph['adj']}
     priority_queue = [(0, start_node)]
@@ -431,18 +667,20 @@ def dijkstra(graph, start_node, end_node):
     current_node = end_node
     while current_node is not None:
         path.append(current_node)
-        current_node = previous_nodes[current_node]
+        current_node = previous_nodes.get(current_node)  # Use .get() in case end_node is unreachable
 
     # Return the path in correct order (start to end) and the total distance
+    # Check if the path actually reaches the start node
     if path and path[-1] == start_node:
-        return path[::-1], distances[end_node]
+        return path[::-1], distances.get(end_node, float('infinity'))
     else:
         return [], float('infinity')
 
 
 # --- KML Graph Parser ---
 KML_NS = {'kml': 'http://www.opengis.net/kml/2.2'}
-NODE_MATCH_TOLERANCE_M = 15  # Tolerance for snapping KML points to Buildings
+# INCREASED TOLERANCE from 15m to 20m for better connectivity
+NODE_MATCH_TOLERANCE_M = 20  # Tolerance for snapping KML points to Buildings
 
 
 def parse_kml_paths(kml_content, building_locations):
@@ -451,15 +689,19 @@ def parse_kml_paths(kml_content, building_locations):
     junction_counter = 0
 
     try:
+        # Register namespace for safer parsing
+        ET.register_namespace('', KML_NS['kml'])
         root = ET.fromstring(kml_content)
-    except ET.ParseError:
-        st.error("Error: Could not parse KML content.")
+    except ET.ParseError as e:
+        st.error(f"Error: Could not parse KML content. {e}")
         return {"nodes": building_locations, "adj": {bid: {} for bid in building_locations}}
 
-    # Helper to find the closest official building node
-    def find_closest_building(lat, lon):
+    # Helper to find the closest official building node or junction
+    def find_closest_node(lat, lon):
         min_distance = float('inf')
         closest_id = None
+
+        # Check against existing buildings (high priority, larger tolerance)
         for b_id, (b_lat, b_lon) in building_locations.items():
             dist = haversine(lat, lon, b_lat, b_lon)
             if dist < min_distance:
@@ -467,8 +709,24 @@ def parse_kml_paths(kml_content, building_locations):
                 closest_id = b_id
 
         if min_distance <= NODE_MATCH_TOLERANCE_M:
-            return closest_id
-        return None
+            return closest_id, min_distance
+
+        # If not close to a building, check against existing junctions (lower priority, smaller tolerance for merging)
+        # Reset min distance for junction check
+        min_distance = float('inf')
+        closest_id = None
+
+        for node_id, (n_lat, n_lon) in all_nodes.items():
+            if node_id.startswith('J'):
+                dist = haversine(lat, lon, n_lat, n_lon)
+                if dist < min_distance:
+                    min_distance = dist
+                    closest_id = node_id
+
+        if closest_id and min_distance < 5:  # Merge junctions within 5m
+            return closest_id, min_distance
+
+        return None, float('inf')
 
     # Parse all LineString placemarks
     for placemark in root.findall('.//kml:Placemark', KML_NS):
@@ -486,39 +744,28 @@ def parse_kml_paths(kml_content, building_locations):
                         continue
 
                 previous_node_id = None
+
+                # Iterate through all points in the line segment
                 for lat, lon in points:
-                    current_node_id = find_closest_building(lat, lon)
+                    current_node_id, dist_to_closest = find_closest_node(lat, lon)
 
-                    if current_node_id is None:
-                        # Create a new Junction Node if not close to a building
-                        found_existing = False
-                        for node_id, (n_lat, n_lon) in all_nodes.items():
-                            # Merge junctions within 5m to simplify the graph at intersections
-                            if node_id.startswith('J') and haversine(lat, lon, n_lat, n_lon) < 5:
-                                current_node_id = node_id
-                                found_existing = True
-                                break
-
-                        if not found_existing:
-                            current_node_id = f"J{junction_counter:04d}"
-                            all_nodes[current_node_id] = (lat, lon)
-                            junction_counter += 1
+                    if current_node_id is None or (
+                            not current_node_id.startswith('J') and dist_to_closest > NODE_MATCH_TOLERANCE_M):
+                        # Create a new Junction Node if not close to a building or an existing junction
+                        current_node_id = f"J{junction_counter:04d}"
+                        all_nodes[current_node_id] = (lat, lon)
+                        junction_counter += 1
 
                     if previous_node_id is not None and previous_node_id != current_node_id:
-                        p_lat, p_lon = all_nodes[previous_node_id]
-                        c_lat, c_lon = all_nodes[current_node_id]
-                        distance = haversine(p_lat, p_lon, c_lat, c_lon)
-
-                        # Store the edge (undirected graph means storing both directions)
+                        # Only add edge if the current node is truly new or significantly different from the previous one.
                         raw_edges.add(tuple(sorted((previous_node_id, current_node_id))))
-                        raw_edges.add(tuple(sorted((current_node_id, previous_node_id))))
 
                     previous_node_id = current_node_id
 
     # Build adjacency list structure for Dijkstra's
     adj_list = {node_id: {} for node_id in all_nodes.keys()}
 
-    for u, v in set(raw_edges):
+    for u, v in raw_edges:
         u_lat, u_lon = all_nodes[u]
         v_lat, v_lon = all_nodes[v]
         weight = haversine(u_lat, u_lon, v_lat, v_lon)
@@ -534,7 +781,7 @@ def parse_kml_paths(kml_content, building_locations):
 
 
 # ==============================================================================
-# --- 1. CONFIGURATION AND DATA (Accurate 24 Destinations) ---
+# --- 1. CONFIGURATION AND DATA (Updated Destinations including NSTP) ---
 # ==============================================================================
 
 st.set_page_config(page_title="BulSU Campus Map for New Students", layout="wide")
@@ -547,7 +794,7 @@ st.error(
 # Campus center coordinates
 campus_lat, campus_lon = 14.85806, 120.814
 
-# Definitive 24 Locations (with display properties)
+# Definitive Locations (NSTP added)
 BUILDING_DATA = [
     {"name": "Gate 1 (Main Gate)", "initials": "G1", "lat": 14.857238955221407, "lon": 120.81232477926912,
      "area": "Entrance", "color": "green", "icon": "info-sign", "essential": True},
@@ -597,6 +844,8 @@ BUILDING_DATA = [
      "area": "Sports", "color": "orange", "icon": "trophy", "essential": True},
     {"name": "Food Stalls/Canteen Annex", "initials": "CANTEEN", "lat": 14.858289546983633, "lon": 120.81549844558987,
      "area": "Food", "color": "beige", "icon": "coffee", "essential": True},
+    {"name": "NSTP Building", "initials": "NSTP", "lat": 14.8566904, "lon": 120.8128336, "area": "Education",
+     "color": "blue", "icon": "users", "essential": False},  # Added NSTP from KML data
 ]
 
 # Create data structures
@@ -681,6 +930,7 @@ if selected_start_initials not in ["Select Start Location", "Select Destination"
     "Select Start Location", "Select Destination"]:
     try:
         # 1. Find the shortest path of node IDs
+        # Pass the graph structure to Dijkstra's
         path_nodes, calculated_distance = dijkstra(
             {"adj": GRAPH_ADJACENCY},
             selected_start_initials,
@@ -698,10 +948,10 @@ if selected_start_initials not in ["Select Start Location", "Select Destination"
             """)
         else:
             st.warning(
-                f"Could not find a connected path between {LOCATION_NAMES[selected_start_initials]} and {LOCATION_NAMES[selected_end_initials]}.")
+                f"Could not find a connected path between **{LOCATION_NAMES[selected_start_initials]}** and **{LOCATION_NAMES[selected_end_initials]}**. The path network might be disconnected in this area.")
 
     except Exception as e:
-        st.error(f"An error occurred during routing: {e}")
+        st.error(f"An unexpected error occurred during routing: {e}")
 
 # ==============================================================================
 # --- 3. FOLIUM MAP INITIALIZATION & RENDERING ---
@@ -727,10 +977,12 @@ plugins.LocateControl(
 ).add_to(m)
 
 # --- 4. Draw all KML Path Segments (Optional: for network visibility) ---
-# To see the underlying network the shortest path is calculated on:
+# To help visualize the network the shortest path is calculated on, uncomment the block below.
+# The network includes all permanent buildings (IDs like 'AO') and temporary junctions (IDs like 'J0001').
+# folium.FeatureGroup(name='Underlying Path Network', show=False).add_to(m)
 # for u, neighbors in GRAPH_ADJACENCY.items():
 #     for v, weight in neighbors.items():
-#         # Ensure we only draw each unique segment once
+#         # Ensure we only draw each unique segment once (since it's bidirectional)
 #         if u < v:
 #             u_lat, u_lon = GRAPH_NODES[u]
 #             v_lat, v_lon = GRAPH_NODES[v]
@@ -739,8 +991,7 @@ plugins.LocateControl(
 #                 color="#CCCCCC",
 #                 weight=1,
 #                 opacity=0.4
-#             ).add_to(m)
-
+#             ).add_to(m.get_children()[-1]) # Add to the FeatureGroup
 
 # Add markers for filtered buildings
 for index, b in filtered_df.iterrows():
@@ -785,7 +1036,6 @@ if route_to_display:
 
     # Zoom to fit the route
     if len(route_to_display) > 1:
-        # Create bounds list [min_lat, min_lon], [max_lat, max_lon]
         lats = [p[0] for p in route_to_display]
         lons = [p[1] for p in route_to_display]
         m.fit_bounds([[min(lats), min(lons)], [max(lats), max(lons)]])
