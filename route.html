@@ -3,348 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campus Route Map</title>
-    <!-- Load Tailwind CSS for modern styling -->
+    <title>BulSU Campus Map Visualization (18 Detailed Routes)</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Apply the Inter font and ensure full-screen layout */
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            background-color: #f7f9fc;
-        }
-
-        /* The map container needs a defined height */
+        /* Custom styles for the map */
         #map {
-            height: 75vh; /* 75% of the viewport height */
+            height: 650px; /* Increased height for better viewing */
             width: 100%;
             border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-
-        /* Styling for the info box */
-        #info-box {
-            max-height: 25vh;
-            overflow-y: auto;
-        }
-
-        /* Custom styles to make the OpenLayers map look clean */
-        .ol-control button, .ol-control button:hover {
-            background-color: #4f46e5; /* Indigo */
-            color: white;
-            border-radius: 0.375rem;
+        /* Style for the custom map marker icon */
+        .custom-div-icon {
+            background: none !important;
+            border: none !important;
         }
     </style>
-    <!-- Load OpenLayers Library -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
-    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <!-- Load Leaflet CSS and JS for the map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20n6a9D9SDRu4kuSXD6+8/9FT8+hE8D0JMLzU0H7f9w="
+        crossorigin=""></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
 </head>
-<body class="p-4 md:p-8">
+<body class="bg-gray-50 p-4 sm:p-8 font-sans">
 
-    <header class="mb-6">
-        <h1 class="text-3xl font-extrabold text-indigo-700">Campus Pathways Guide</h1>
-        <p class="text-gray-600">Interactive map showing the route to the NSTP Building.</p>
-    </header>
+    <div class="max-w-6xl mx-auto space-y-8">
+        <header class="text-center p-6 bg-white rounded-xl shadow-lg">
+            <h1 class="text-3xl font-extrabold text-blue-800">BulSU Campus: All 18 Pathways from Gate 1</h1>
+            <p class="text-gray-600 mt-2">Visualization of the complete coordinate data set provided.</p>
+        </header>
 
-    <!-- Map Container -->
-    <div id="map" class="mb-6"></div>
+        <!-- Map Container -->
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700">Campus Location Overview</h2>
+            <div id="map"></div>
+        </div>
 
-    <!-- Info/Status Box -->
-    <div id="info-box" class="bg-white p-4 rounded-lg shadow-lg border-t-4 border-indigo-500">
-        <h2 class="text-xl font-semibold text-indigo-600 mb-2">Map Status</h2>
-        <p id="status-message" class="text-gray-700">Initializing map and loading route data...</p>
+        <!-- Legend/Data Summary -->
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700">Route Legend (Gate 1 to...)</h2>
+            <div id="data-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Data will be populated here -->
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // --- 1. KML Data Extraction ---
-        // The KML content from your 'Untitled map (2).kml' file.
-        const kmlString = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>Untitled map</name>
-    <description/>
-    <Style id="icon-1899-0288D1-nodesc-normal">
-      <IconStyle>
-        <color>ffd18802</color>
-        <scale>1</scale>
-        <Icon>
-          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
-        </Icon>
-        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
-      </IconStyle>
-      <LabelStyle>
-        <scale>0</scale>
-      </LabelStyle>
-      <BalloonStyle>
-        <text><![CDATA[<h3>$[name]</h3>]]></text>
-      </BalloonStyle>
-    </Style>
-    <Style id="icon-1899-0288D1-nodesc-highlight">
-      <IconStyle>
-        <color>ffd18802</color>
-        <scale>1</scale>
-        <Icon>
-          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
-        </Icon>
-        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
-      </IconStyle>
-      <LabelStyle>
-        <scale>1</scale>
-      </LabelStyle>
-      <BalloonStyle>
-        <text><![CDATA[<h3>$[name]</h3>]]></text>
-      </BalloonStyle>
-    </Style>
-    <Style id="line-1267FF-5000-nodesc">
-      <LineStyle>
-        <color>ffff6712</color>
-        <width>5</width>
-      </LineStyle>
-      <PolyStyle>
-        <color>00ffffff</color>
-      </PolyStyle>
-    </Style>
-    <Style id="icon-1899-DB4436-nodesc">
-      <IconStyle>
-        <color>ff3644db</color>
-        <scale>1</scale>
-        <Icon>
-          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
-        </Icon>
-        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
-      </IconStyle>
-      <LabelStyle>
-        <scale>0</scale>
-      </LabelStyle>
-      <BalloonStyle>
-        <text><![CDATA[<h3>$[name]</h3>]]></text>
-      </BalloonStyle>
-    </Style>
-    <Placemark>
-      <name>Federizo Hall</name>
-      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
-      <Point>
-        <coordinates>
-          120.8163769,14.8582716,0
-        </coordinates>
-      </Point>
-    </Placemark>
-    <Placemark>
-      <name>CBA Building</name>
-      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
-      <Point>
-        <coordinates>
-          120.8135223,14.8587155,0
-        </coordinates>
-      </Point>
-    </Placemark>
-    <Placemark>
-      <name>CIT Building</name>
-      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
-      <Point>
-        <coordinates>
-          120.8128033,14.8580142,0
-        </coordinates>
-      </Point>
-    </Placemark>
-    <Placemark>
-      <name>Admissions Office</name>
-      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
-      <Point>
-        <coordinates>
-          120.8122345,14.8576402,0
-        </coordinates>
-      </Point>
-    </Placemark>
-    <Placemark>
-      <name>Gate 1</name>
-      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
-      <Point>
-        <coordinates>
-          120.812168,14.8572111,0
-        </coordinates>
-      </Point>
-    </Placemark>
-    <Placemark>
-      <name>BulSU NSTP Building</name>
-      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
-      <Point>
-        <coordinates>
-          120.81307,14.85686,0
-        </coordinates>
-      </Point>
-    </Placemark>
-    <Placemark>
-      <name>Directions from gate 1 to BulSU NSTP Building</name>
-      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
-      <LineString>
-        <tessellate>1</tessellate>
-        <coordinates>
-          120.81232,14.85723,0
-          120.81276,14.8576,0
-          120.81331,14.85704,0
-          120.81314,14.8569,0
-          120.81313,14.85689,0
-          120.81312,14.85688,0
-          120.81312,14.85687,0
-          120.81311,14.85686,0
-          120.81311,14.85685,0
-          120.81311,14.85684,0
-          120.81312,14.85683,0
-          120.81312,14.85682,0
-          120.81314,14.85681,0
-          120.81327,14.85667,0
-          120.81336,14.85658,0
-          120.81347,14.85648,0
-          120.81358,14.85638,0
-          120.81368,14.8563,0
-          120.81373,14.85626,0
-        </coordinates>
-      </LineString>
-    </Placemark>
-  </Document>
-</kml>`;
+        // --- COMPREHENSIVE DATA SET (18 PATHWAYS) ---
+
+        // Distinct color palette for 18 routes
+        const routeColors = [
+            '#FF6347', // Red-Orange (Admissions)
+            '#4682B4', // Steel Blue (Admin)
+            '#3CB371', // Medium Sea Green (Registrar)
+            '#9932CC', // Dark Orchid (OSA)
+            '#E9967A', // Dark Salmon (Roxas Hall) - distinct from OSA even if coords are same
+            '#A0522D', // Sienna (Federizo Hall)
+            '#00CED1', // Dark Turquoise (CIT)
+            '#556B2F', // Dark Olive Green (CBA)
+            '#FFD700', // Gold (COED)
+            '#8B4513', // Saddle Brown (CHK)
+            '#DC143C', // Crimson (COE)
+            '#008080', // Teal (CAL)
+            '#800080', // Purple (Activity Center)
+            '#2F4F4F', // Dark Slate Gray (Main Library)
+            '#006400', // Dark Green (Heroes Park)
+            '#800000', // Maroon (Food Court)
+            '#696969', // Dim Gray (Infirmary)
+            '#FF8C00', // Dark Orange (Gate 1) - used for the main marker
+        ];
+
+        // Structure: [Name, Raw Coordinate String (lat, lon pairs)]
+        const rawRouteData = [
+            ["Admissions Office", "14.857223717206535, 120.81231552877544\n14.857244799009289, 120.81234208129061\n14.857263131010008, 120.81236578889342\n14.857276880009541, 120.81238665158389\n14.857298878406947, 120.81241130749082\n14.857307127805404, 120.81242932526898\n14.857334625797986, 120.81244734304711\n14.857351124591831, 120.81246725743348\n14.857357540789103, 120.8124833786034\n14.85737495618073, 120.81250518959799\n14.857392371570958, 120.81252415568024\n14.857415286555966, 120.81255070819539\n14.857438201538544, 120.81256777766941\n14.857450117328524, 120.81258010562287\n14.8574730323074, 120.81260476152981\n14.85748586469451, 120.81262372761208\n14.857502363476803, 120.81264743521487\n14.857524361851258, 120.8126626080807\n14.857537194235327, 120.81268916059584\n14.857558276007472, 120.81271191989453\n14.857572941586888, 120.81273562749735\n14.857593106756976, 120.81274985205904\n14.857618771516158, 120.8127707147495\n14.857628854099273, 120.81278778422353\n14.857645352870664, 120.81281338843459\n14.857664601435681, 120.8128361477333\n14.857677141674149, 120.81286418726205\n14.85769872309557, 120.8128785409386\n14.85771413839527, 120.81290166630639\n14.857749593580392, 120.81293515821835\n14.857764238111672, 120.81296944755678\n14.857790444112537, 120.81297263726269\n14.857805088641056, 120.81299735748343\n14.857834377695106, 120.81301649571883\n14.857838231288541, 120.81303483631322\n14.857823586779652, 120.81305716422804\n14.857805088451215, 120.8130810869939\n14.85779121470385, 120.81310341490872\n14.85777271637264, 120.81312255312142\n14.857743427344987, 120.81315205786598\n14.857722616717663, 120.81317199350421"],
+            ["Administration Building", "14.857227383607164, 120.81231458047134\n14.858253523986543, 120.81350449542867\n14.858264505945309, 120.81349649102147\n14.858283949876494, 120.81348576218518\n14.85829237557947, 120.81348039776702\n14.858297560627278, 120.81346497506483\n14.858313763900917, 120.81346028119896\n14.858328022780693, 120.81344687015358\n14.858336448481952, 120.81343748242182"],
+            ["Registrar's Office", "14.857231951696395, 120.81230999474423\n14.85824387586885, 120.81351054775081\n14.857875404028864, 120.81385383383957\n14.858133884344007, 120.81418005044027\n14.858143050306836, 120.81421608599655\n14.8581412171143, 120.81427108763508\n14.857712249633623, 120.81468454822817"],
+            ["Student Affairs Office (OSA)", "14.85722737753228, 120.8123075991754\n14.85760501646353, 120.81275709532477\n14.857053223433768, 120.81331090492655\n14.857249375934748, 120.8135460843465\n14.857291539533183, 120.81355556738761\n14.857377699904417, 120.81382678236385\n14.857207212328058, 120.8139747178054"],
+            ["Roxas Hall (Main Building)", "14.85722737753228, 120.8123075991754\n14.85760501646353, 120.81275709532477\n14.857053223433768, 120.81331090492655\n14.857249375934748, 120.8135460843465\n14.857291539533183, 120.81355556738761\n14.857377699904417, 120.81382678236385\n14.857207212328058, 120.8139747178054"], // Identical path as OSA, separate destination marker
+            ["Federizo Hall", "14.857222232375102, 120.81230441212736\n14.858248874509577, 120.81351140619314\n14.8578807357222, 120.81384936453658\n14.858129618353198, 120.81417927624206\n14.858145173507996, 120.81421146275096\n14.858129618353198, 120.81425437809614\n14.858007769601818, 120.81436971308635"],
+            ["CIT Building (Information Technology)", "14.857231342857316, 120.81231006196273\n14.857585150218535, 120.812741540334\n14.857657561498218, 120.81269128021603"],
+            ["CBA Building (Business Administration)", "14.857231737951556, 120.81231007737065\n14.858266157606362, 120.81351170703611\n14.858133938828905, 120.81362435981724\n14.858244926024813, 120.81375484455948"],
+            ["COED Building (Education)", "14.85723756264293, 120.81230881959102\n14.858258054075955, 120.81350176818223\n14.857857257411418, 120.81386858392554\n14.85813164905436, 120.81416203652014\n14.858122399903529, 120.81426091728572\n14.857801762429997, 120.81457031839095\n14.857820260758727, 120.81457669779518\n14.858560192608307, 120.8154602452812\n14.858849998558496, 120.81515403387809"],
+            ["CHK Building (Home Economics/Kinesthetics)", "14.85723756264293, 120.81229606078254\n14.858254971027538, 120.81348900937378\n14.858412206441201, 120.81338055950185"],
+            ["COE Building (Engineering)", "14.857221573677649, 120.8123046187677\n14.858255990827312, 120.8135008810616\n14.857488604143063, 120.81419557149684"],
+            ["CAL Building (Arts and Letters)", "14.857239487230459, 120.81229892389935\n14.858250729509088, 120.81351101070327\n14.857856098939296, 120.81385868823384\n14.85813357363394, 120.81418084814753\n14.858155154984129, 120.81425740099832\n14.858121241432857, 120.81424783189196\n14.857809853122198, 120.81457637120987\n14.858546701963194, 120.8154471598874\n14.858824175770527, 120.81518241461181"],
+            ["Activity Center / Gymnasium", "14.85723286054277, 120.81230926933186\n14.857601000434475, 120.8127598804564\n14.857313229164221, 120.81303883020017"],
+            ["BSU Main Library", "14.85723522104112, 120.8123009072618\n14.858251122031646, 120.81349855399958"], // Short path provided here
+            ["Heroes Park / Rizal Monument", "14.857235220206237, 120.81230090641704\n14.85826856368972, 120.81350306659485\n14.85773445216894, 120.813965435894\n14.857902315932083, 120.81418872643358"],
+            ["Food Court / Canteen", "14.857239968415367, 120.81230782991943\n14.857600686477925, 120.81274960366244\n14.857044193830047, 120.81331099123477\n14.857258466792201, 120.81355500344662\n14.857266174448752, 120.81364750480797\n14.857238426883884, 120.8137368164672"],
+            ["University Infirmary / Clinic", "14.857232934975002, 120.81230328608719\n14.85825319820291, 120.813494168965\n14.857876050178037, 120.81384376526438\n14.858126755584948, 120.81417757332686\n14.858155096177963, 120.81423621528677\n14.857808468669555, 120.81457904520612\n14.858100595034262, 120.81491285328552"],
+        ];
+
+        // Gate 1 coordinates (Fixed starting point)
+        const GATE_1_COORD = [14.857227383607164, 120.81231458047134];
+
+        // Process raw data into structured array
+        const processedRoutes = rawRouteData.map((route, index) => {
+            const [name, rawCoords] = route;
+            const color = routeColors[index]; // Assign one of the 17 unique colors
+
+            // Parse coordinates (lat, lon)
+            const coords = rawCoords.split('\n').map(line => {
+                const parts = line.split(',').map(p => parseFloat(p.trim()));
+                // Data format is Latitude, Longitude
+                return [parts[0], parts[1]];
+            });
+
+            // The last point in the sequence is the destination
+            const destinationCoord = coords[coords.length - 1];
+
+            return {
+                id: index + 2, // ID starts at 2 for the first destination
+                name: name,
+                color: color,
+                coords: coords,
+                destination: destinationCoord,
+            };
+        });
+
+        // Add the main starting point
+        const campusPoints = [{
+            name: "Gate 1 Entrance (Start)",
+            lat: GATE_1_COORD[0],
+            lon: GATE_1_COORD[1],
+            color: routeColors[17] // The last color for the start marker
+        }];
+
+        // Add all destination points
+        processedRoutes.forEach(route => {
+            campusPoints.push({
+                name: route.name,
+                lat: route.destination[0],
+                lon: route.destination[1],
+                color: route.color
+            });
+        });
 
 
-        window.onload = function () {
-            const statusMessage = document.getElementById('status-message');
+        const BSU_CENTER = [14.8580, 120.8140];
+        const INITIAL_ZOOM = 17;
 
+        function initMap() {
             try {
-                // The coordinates for the center of your map (Bulacan State University area)
-                const centerCoordinates = [120.813, 14.857];
-                const zoomLevel = 18;
+                // Initialize the map
+                const map = L.map('map').setView(BSU_CENTER, INITIAL_ZOOM);
 
-                // --- 2. Create Vector Source and Load KML ---
-                const kmlFormat = new ol.format.KML({
-                    // Setting extractStyles to false and managing styles in the layer often gives better control
-                    extractStyles: false
-                });
+                // Add the tile layer (Google Maps/OpenStreetMap lookalike)
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
 
-                const kmlSource = new ol.source.Vector({
-                    // Use a string reader to process the KML data from the variable
-                    features: kmlFormat.readFeatures(kmlString, {
-                        // KML uses WGS84 (EPSG:4326), map uses Web Mercator (EPSG:3857)
-                        dataProjection: 'EPSG:4326',
-                        featureProjection: 'EPSG:3857'
-                    })
-                });
+                const dataListContainer = document.getElementById('data-list');
 
-                // Get the extent (bounding box) of the features to zoom in correctly
-                const extent = kmlSource.getExtent();
+                // 1. Plot Markers
+                campusPoints.forEach((point) => {
+                    const markerColorHex = point.color;
 
-                // --- 3. Initialize the Map ---
-                const map = new ol.Map({
-                    target: 'map',
-                    layers: [
-                        // Base Map Layer (OpenStreetMap)
-                        new ol.layer.Tile({
-                            source: new ol.source.OSM(),
-                            visible: true,
-                            title: 'OSM'
-                        }),
-                        // Vector Layer for the KML data
-                        new ol.layer.Vector({
-                            source: kmlSource,
-                            title: 'Campus Route',
-                            // Define a style function that forces the LineString to be visible
-                            style: function(feature) {
-                                // Check if the feature is the pathway (a LineString)
-                                if (feature.getGeometry().getType() === 'LineString') {
-                                    // This style FORCES the pathway to be a thick, visible blue line
-                                    return new ol.style.Style({
-                                        stroke: new ol.style.Stroke({
-                                            color: '#4F46E5', // Indigo Blue, matching the theme
-                                            width: 6,
-                                            lineDash: [10, 5] // Make it slightly dashed for better visibility
-                                        })
-                                    });
-                                }
-
-                                // Default style for points (e.g., buildings/landmarks)
-                                return new ol.style.Style({
-                                    image: new ol.style.Circle({
-                                        radius: 8,
-                                        fill: new ol.style.Fill({ color: '#DB4436' }), // Red color for points
-                                        stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
-                                    }),
-                                    text: new ol.style.Text({
-                                        text: feature.get('name'),
-                                        font: 'bold 14px Inter',
-                                        fill: new ol.style.Fill({ color: '#000' }),
-                                        stroke: new ol.style.Stroke({ color: '#fff', width: 4 }),
-                                        offsetY: -15
-                                    })
-                                });
-                            }
-                        })
-                    ],
-                    view: new ol.View({
-                        center: ol.proj.fromLonLat(centerCoordinates),
-                        zoom: zoomLevel
-                    })
-                });
-
-                // --- 4. Adjust View to Fit Route ---
-                // If we found features, zoom the map to fit their extent
-                if (!ol.extent.isEmpty(extent)) {
-                    map.getView().fit(extent, {
-                        padding: [50, 50, 50, 50], // Add some padding around the extent
-                        duration: 1000 // Smooth animation
-                    });
-                }
-
-
-                // --- 5. Add Pop-up Interaction ---
-                const element = document.createElement('div');
-                element.className = 'bg-indigo-600 text-white p-2 rounded-lg shadow-xl text-sm font-medium border-2 border-indigo-200 whitespace-nowrap';
-
-                const overlay = new ol.Overlay({
-                    element: element,
-                    autoPan: {
-                        animation: {
-                            duration: 250,
-                        },
-                    },
-                    offset: [0, -15] // Adjust vertical offset for the marker
-                });
-                map.addOverlay(overlay);
-
-                map.on('singleclick', function (event) {
-                    let featureFound = false;
-                    map.forEachFeatureAtPixel(event.pixel, function (feature) {
-                        const featureName = feature.get('name');
-                        // Only show popup for point features (buildings/landmarks)
-                        if (featureName && feature.getGeometry().getType() === 'Point') {
-                            const coordinate = feature.getGeometry().getCoordinates();
-                            element.textContent = featureName;
-                            overlay.setPosition(coordinate);
-                            featureFound = true;
-                            return true; // Stop processing features once one is found
-                        }
-                    }, {
-                        // Limit hit detection to the vector layer (index 1)
-                        layerFilter: function(layer) {
-                            return layer === map.getLayers().item(1);
-                        }
+                    // Custom SVG icon (Location Pin)
+                    const svgIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<svg class="w-7 h-7" style="color:${markerColorHex}; transform: translateY(-100%);" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.54 22.351A21.734 21.734 0 002.35 10.3c0-5.756 4.673-10.43 10.428-10.43s10.428 4.674 10.428 10.43a21.734 21.734 0 00-9.19 12.051zM13.5 10a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" clip-rule="evenodd" /></svg>`,
+                        iconAnchor: [14, 28] // Position the tip of the icon
                     });
 
-                    if (!featureFound) {
-                        overlay.setPosition(undefined); // Hide the popup if nothing is clicked
-                    }
+                    L.marker([point.lat, point.lon], {icon: svgIcon}).addTo(map)
+                        .bindPopup(`<b>${point.name}</b><br>Lat: ${point.lat.toFixed(6)}, Lon: ${point.lon.toFixed(6)}`);
                 });
 
-                // Update status message
-                statusMessage.innerHTML = 'Map and **route loaded successfully**. Click on a building marker to see its name. The route is shown as a dashed blue line.';
+                // 2. Plot Routes and Add to Legend
+                processedRoutes.forEach((route, index) => {
+                     // Leaflet polyline
+                    L.polyline(route.coords, {
+                        color: route.color,
+                        weight: 4,
+                        opacity: 0.7,
+                        dashArray: index % 3 === 0 ? '5, 5' : (index % 3 === 1 ? '10, 5' : null) // Vary line style
+                    }).addTo(map).bindPopup(`${route.name} (${route.coords.length} points)`);
+
+                    // Add route description to data list
+                    const routeItem = document.createElement('div');
+                    routeItem.className = 'flex items-center space-x-3 p-2 rounded-lg shadow-sm bg-gray-50';
+                    routeItem.innerHTML = `
+                        <span style="color: ${route.color};" class="font-bold w-5 h-5 flex items-center justify-center text-xs border border-current rounded-full">${route.id}</span>
+                        <span class="text-sm font-medium text-gray-800">${route.name}</span>
+                    `;
+                    dataListContainer.appendChild(routeItem);
+                });
 
             } catch (error) {
-                console.error("Map Initialization Error:", error);
-                statusMessage.innerHTML = `<span class="text-red-500">Error loading map: ${error.message}. Check the console for details.</span>`;
+                console.error("Error initializing map:", error);
+                document.getElementById('map').innerHTML = `<p class="text-red-600 p-4">Error loading map: ${error.message}. Please check your internet connection or console for details.</p>`;
             }
-        };
+        }
+
+        // Initialize map when the window loads
+        window.onload = initMap;
     </script>
 </body>
 </html>
