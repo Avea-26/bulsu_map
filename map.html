@@ -3,217 +3,496 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BulSU Campus Map Visualization (18 Detailed Routes)</title>
+    <title>Complete Gate 1 Campus Pathways</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles for the map */
+        /* Custom styles for Leaflet map */
         #map {
-            height: 650px; /* Increased height for better viewing */
+            height: 70vh; /* Make map responsive and fill vertical space */
             width: 100%;
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        /* Style for the custom map marker icon */
-        .custom-div-icon {
-            background: none !important;
-            border: none !important;
+        /* Overriding Tailwind's default font to match 'Inter' if possible */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+        }
+        /* Customizing select for better look */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23374151'%3E%3Cpath d='M6 8l4 4 4-4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.5em 1.5em;
         }
     </style>
-    <!-- Load Leaflet CSS and JS for the map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-        crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20n6a9D9SDRu4kuSXD6+8/9FT8+hE8D0JMLzU0H7f9w="
-        crossorigin=""></script>
+    <!-- Load Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
+                    colors: {
+                        'primary': '#0056b3',
+                        'secondary': '#6c757d',
+                    }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-gray-50 p-4 sm:p-8 font-sans">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-6xl mx-auto space-y-8">
-        <header class="text-center p-6 bg-white rounded-xl shadow-lg">
-            <h1 class="text-3xl font-extrabold text-blue-800">BulSU Campus: All 18 Pathways from Gate 1</h1>
-            <p class="text-gray-600 mt-2">Visualization of the complete coordinate data set provided.</p>
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-1">Gate 1 Campus Navigation</h1>
+            <p class="text-gray-600">Select a destination to view the complete pathway from the main entrance (Gate 1).</p>
         </header>
 
-        <!-- Map Container -->
-        <div class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700">Campus Location Overview</h2>
-            <div id="map"></div>
+        <!-- Control Panel -->
+        <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 p-4 bg-white rounded-lg shadow-md mb-6">
+            <label for="destination-select" class="text-lg font-medium text-gray-700 whitespace-nowrap">Choose Destination:</label>
+            <select id="destination-select" class="block w-full md:w-80 px-4 py-2 border border-gray-300 bg-gray-50 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary cursor-pointer transition duration-150 ease-in-out">
+                <option value="" disabled selected>-- Select a Building --</option>
+            </select>
         </div>
 
-        <!-- Legend/Data Summary -->
-        <div class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700">Route Legend (Gate 1 to...)</h2>
-            <div id="data-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Data will be populated here -->
-            </div>
-        </div>
+        <!-- Map Container -->
+        <div id="map"></div>
 
     </div>
 
     <script>
-        // --- COMPREHENSIVE DATA SET (18 PATHWAYS) ---
+        // --- 1. CONFIGURATION AND DATA (Fully Parsed from routes pathways.txt) ---
 
-        // Distinct color palette for 18 routes
-        const routeColors = [
-            '#FF6347', // Red-Orange (Admissions)
-            '#4682B4', // Steel Blue (Admin)
-            '#3CB371', // Medium Sea Green (Registrar)
-            '#9932CC', // Dark Orchid (OSA)
-            '#E9967A', // Dark Salmon (Roxas Hall) - distinct from OSA even if coords are same
-            '#A0522D', // Sienna (Federizo Hall)
-            '#00CED1', // Dark Turquoise (CIT)
-            '#556B2F', // Dark Olive Green (CBA)
-            '#FFD700', // Gold (COED)
-            '#8B4513', // Saddle Brown (CHK)
-            '#DC143C', // Crimson (COE)
-            '#008080', // Teal (CAL)
-            '#800080', // Purple (Activity Center)
-            '#2F4F4F', // Dark Slate Gray (Main Library)
-            '#006400', // Dark Green (Heroes Park)
-            '#800000', // Maroon (Food Court)
-            '#696969', // Dim Gray (Infirmary)
-            '#FF8C00', // Dark Orange (Gate 1) - used for the main marker
-        ];
+        // Fixed coordinate for Gate 1 (Start Reference)
+        const GATE_1_COORDS = [14.857227383607164, 120.81231458047134];
 
-        // Structure: [Name, Raw Coordinate String (lat, lon pairs)]
-        const rawRouteData = [
-            ["Admissions Office", "14.857223717206535, 120.81231552877544\n14.857244799009289, 120.81234208129061\n14.857263131010008, 120.81236578889342\n14.857276880009541, 120.81238665158389\n14.857298878406947, 120.81241130749082\n14.857307127805404, 120.81242932526898\n14.857334625797986, 120.81244734304711\n14.857351124591831, 120.81246725743348\n14.857357540789103, 120.8124833786034\n14.85737495618073, 120.81250518959799\n14.857392371570958, 120.81252415568024\n14.857415286555966, 120.81255070819539\n14.857438201538544, 120.81256777766941\n14.857450117328524, 120.81258010562287\n14.8574730323074, 120.81260476152981\n14.85748586469451, 120.81262372761208\n14.857502363476803, 120.81264743521487\n14.857524361851258, 120.8126626080807\n14.857537194235327, 120.81268916059584\n14.857558276007472, 120.81271191989453\n14.857572941586888, 120.81273562749735\n14.857593106756976, 120.81274985205904\n14.857618771516158, 120.8127707147495\n14.857628854099273, 120.81278778422353\n14.857645352870664, 120.81281338843459\n14.857664601435681, 120.8128361477333\n14.857677141674149, 120.81286418726205\n14.85769872309557, 120.8128785409386\n14.85771413839527, 120.81290166630639\n14.857749593580392, 120.81293515821835\n14.857764238111672, 120.81296944755678\n14.857790444112537, 120.81297263726269\n14.857805088641056, 120.81299735748343\n14.857834377695106, 120.81301649571883\n14.857838231288541, 120.81303483631322\n14.857823586779652, 120.81305716422804\n14.857805088451215, 120.8130810869939\n14.85779121470385, 120.81310341490872\n14.85777271637264, 120.81312255312142\n14.857743427344987, 120.81315205786598\n14.857722616717663, 120.81317199350421"],
-            ["Administration Building", "14.857227383607164, 120.81231458047134\n14.858253523986543, 120.81350449542867\n14.858264505945309, 120.81349649102147\n14.858283949876494, 120.81348576218518\n14.85829237557947, 120.81348039776702\n14.858297560627278, 120.81346497506483\n14.858313763900917, 120.81346028119896\n14.858328022780693, 120.81344687015358\n14.858336448481952, 120.81343748242182"],
-            ["Registrar's Office", "14.857231951696395, 120.81230999474423\n14.85824387586885, 120.81351054775081\n14.857875404028864, 120.81385383383957\n14.858133884344007, 120.81418005044027\n14.858143050306836, 120.81421608599655\n14.8581412171143, 120.81427108763508\n14.857712249633623, 120.81468454822817"],
-            ["Student Affairs Office (OSA)", "14.85722737753228, 120.8123075991754\n14.85760501646353, 120.81275709532477\n14.857053223433768, 120.81331090492655\n14.857249375934748, 120.8135460843465\n14.857291539533183, 120.81355556738761\n14.857377699904417, 120.81382678236385\n14.857207212328058, 120.8139747178054"],
-            ["Roxas Hall (Main Building)", "14.85722737753228, 120.8123075991754\n14.85760501646353, 120.81275709532477\n14.857053223433768, 120.81331090492655\n14.857249375934748, 120.8135460843465\n14.857291539533183, 120.81355556738761\n14.857377699904417, 120.81382678236385\n14.857207212328058, 120.8139747178054"], // Identical path as OSA, separate destination marker
-            ["Federizo Hall", "14.857222232375102, 120.81230441212736\n14.858248874509577, 120.81351140619314\n14.8578807357222, 120.81384936453658\n14.858129618353198, 120.81417927624206\n14.858145173507996, 120.81421146275096\n14.858129618353198, 120.81425437809614\n14.858007769601818, 120.81436971308635"],
-            ["CIT Building (Information Technology)", "14.857231342857316, 120.81231006196273\n14.857585150218535, 120.812741540334\n14.857657561498218, 120.81269128021603"],
-            ["CBA Building (Business Administration)", "14.857231737951556, 120.81231007737065\n14.858266157606362, 120.81351170703611\n14.858133938828905, 120.81362435981724\n14.858244926024813, 120.81375484455948"],
-            ["COED Building (Education)", "14.85723756264293, 120.81230881959102\n14.858258054075955, 120.81350176818223\n14.857857257411418, 120.81386858392554\n14.85813164905436, 120.81416203652014\n14.858122399903529, 120.81426091728572\n14.857801762429997, 120.81457031839095\n14.857820260758727, 120.81457669779518\n14.858560192608307, 120.8154602452812\n14.858849998558496, 120.81515403387809"],
-            ["CHK Building (Home Economics/Kinesthetics)", "14.85723756264293, 120.81229606078254\n14.858254971027538, 120.81348900937378\n14.858412206441201, 120.81338055950185"],
-            ["COE Building (Engineering)", "14.857221573677649, 120.8123046187677\n14.858255990827312, 120.8135008810616\n14.857488604143063, 120.81419557149684"],
-            ["CAL Building (Arts and Letters)", "14.857239487230459, 120.81229892389935\n14.858250729509088, 120.81351101070327\n14.857856098939296, 120.81385868823384\n14.85813357363394, 120.81418084814753\n14.858155154984129, 120.81425740099832\n14.858121241432857, 120.81424783189196\n14.857809853122198, 120.81457637120987\n14.858546701963194, 120.8154471598874\n14.858824175770527, 120.81518241461181"],
-            ["Activity Center / Gymnasium", "14.85723286054277, 120.81230926933186\n14.857601000434475, 120.8127598804564\n14.857313229164221, 120.81303883020017"],
-            ["BSU Main Library", "14.85723522104112, 120.8123009072618\n14.858251122031646, 120.81349855399958"], // Short path provided here
-            ["Heroes Park / Rizal Monument", "14.857235220206237, 120.81230090641704\n14.85826856368972, 120.81350306659485\n14.85773445216894, 120.813965435894\n14.857902315932083, 120.81418872643358"],
-            ["Food Court / Canteen", "14.857239968415367, 120.81230782991943\n14.857600686477925, 120.81274960366244\n14.857044193830047, 120.81331099123477\n14.857258466792201, 120.81355500344662\n14.857266174448752, 120.81364750480797\n14.857238426883884, 120.8137368164672"],
-            ["University Infirmary / Clinic", "14.857232934975002, 120.81230328608719\n14.85825319820291, 120.813494168965\n14.857876050178037, 120.81384376526438\n14.858126755584948, 120.81417757332686\n14.858155096177963, 120.81423621528677\n14.857808468669555, 120.81457904520612\n14.858100595034262, 120.81491285328552"],
-        ];
+        // All route paths, keyed by destination name. Coordinates are [lat, lon].
+        const ROUTE_PATHS = {
+            "Admissions Office": [
+                [14.857223717206535, 120.81231552877544],
+                [14.857244799009289, 120.81234208129061],
+                [14.857263131010008, 120.81236578889342],
+                [14.857276880009541, 120.81238665158389],
+                [14.857298878406947, 120.81241130749082],
+                [14.857307127805404, 120.81242932526898],
+                [14.857334625797986, 120.81244734304711]
+            ],
+            "College of Engineering (CoE)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.85752912408381, 120.81285038374971],
+                [14.857476826011703, 120.81292193567675],
+                [14.857367808226068, 120.81308726265744],
+                [14.857342683935398, 120.81313331908215],
+                [14.857293504351333, 120.8132048709923],
+                [14.857187422961816, 120.81335804822633]
+            ],
+            "College of Architecture and Fine Arts (CAFA)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857790858604732, 120.81290680653606]
+            ],
+            "College of Arts and Sciences (CAS)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.857896434440537, 120.81314552093784],
+                [14.857925577937178, 120.81318071851231]
+            ],
+            "College of Business Administration (CBA)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.857973748232237, 120.81324705118712],
+                [14.857997427218321, 120.81327170709405],
+                [14.858023576203102, 120.81329636299834],
+                [14.858052719699744, 120.8133315605728]
+            ],
+            "College of Education (CoEd)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.858102432247963, 120.81333887018314],
+                [14.85813364654924, 120.8133740677576]
+            ],
+            "College of Information and Communications Technology (CICT)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.858197771787884, 120.81347076594229],
+                [14.858223920772665, 120.81350117075751],
+                [14.858253064269307, 120.81353636833198]
+            ],
+            "College of Industrial Technology (CIT)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.858269550796303, 120.81357662896593],
+                [14.85830076509758, 120.81361182654039],
+                [14.85832990859422, 120.81364702411487]
+            ],
+            "College of Nursing (CoN)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.858482596469613, 120.81379471391501],
+                [14.85850901597813, 120.81382490533596]
+            ],
+            "College of Science (CoS)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.858645000958172, 120.81401391300977]
+            ],
+            "College of Social Sciences and Philosophy (CSSP)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.858694002624536, 120.8140683398909],
+                [14.858739761925184, 120.81412581024628],
+                [14.85876008436573, 120.8141469145946]
+            ],
+            "College of Sports, Exercise and Recreation (CoSER)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.85877843468087, 120.81423403212458],
+                [14.85880458366565, 120.81426922969905]
+            ],
+            "Activity Center / Gymnasium": [
+                [14.85723286054277, 120.81230926933186],
+                [14.857601000434475, 120.8127598804564],
+                [14.857313229164221, 120.81303883020017]
+            ],
+            "BSU Main Library": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.858489714853394, 120.81418084814753],
+                [14.858155154984129, 120.81425740099832],
+                [14.858121241432857, 120.81424783189196],
+                [14.857809853122198, 120.81457637120987],
+                [14.858546701963194, 120.8154471598874],
+                [14.858824175770527, 120.81518241461181]
+            ],
+            "BulSU Hostel": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.85877843468087, 120.81423403212458],
+                [14.85895743431333, 120.81450207559388],
+                [14.85898358329811, 120.81453727316834]
+            ],
+            "Clinic and Pharmacy": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.858844855584878, 120.8143270914842],
+                [14.859063855217332, 120.81467753440733],
+                [14.859132535035272, 120.81475408691884],
+                [14.859155099557404, 120.81477526715655]
+            ],
+            "College of Law": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.858844855584878, 120.8143270914842],
+                [14.859063855217332, 120.81467753440733],
+                [14.859132535035272, 120.81475408691884],
+                [14.859155099557404, 120.81477526715655]
+            ],
+            "Food Court": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.858844855584878, 120.8143270914842],
+                [14.859063855217332, 120.81467753440733],
+                [14.85918731056501, 120.81479836109919],
+                [14.859363198889953, 120.81501655029329],
+                [14.859405514050753, 120.81507483604851]
+            ],
+            "New COE Building": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.85752912408381, 120.81285038374971],
+                [14.857476826011703, 120.81292193567675],
+                [14.857367808226068, 120.81308726265744],
+                [14.857342683935398, 120.81313331908215],
+                [14.857293504351333, 120.8132048709923],
+                [14.857187422961816, 120.81335804822633],
+                [14.856950625340156, 120.81366127113117],
+                [14.856910900350757, 120.8137151034449],
+                [14.85686001095941, 120.81384073822295],
+                [14.85683251306679, 120.81387679803112]
+            ],
+            "NSTP Building": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.85752912408381, 120.81285038374971],
+                [14.857476826011703, 120.81292193567675],
+                [14.857367808226068, 120.81308726265744],
+                [14.857342683935398, 120.81313331908215],
+                [14.857293504351333, 120.8132048709923],
+                [14.857187422961816, 120.81335804822633],
+                [14.857125000557457, 120.81347143496035],
+                [14.85705312419958, 120.81358482099307],
+                [14.856855167098905, 120.8139591147071],
+                [14.856750700547056, 120.81414341951918],
+                [14.856699811155609, 120.81426425620959],
+                [14.856621943030248, 120.81442436440268],
+                [14.856555519842523, 120.81457179043236]
+            ],
+            "Old CoE/CoEd Building": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.85752912408381, 120.81285038374971],
+                [14.857476826011703, 120.81292193567675],
+                [14.857367808226068, 120.81308726265744],
+                [14.857342683935398, 120.81313331908215],
+                [14.857293504351333, 120.8132048709923],
+                [14.857187422961816, 120.81335804822633],
+                [14.857125000557457, 120.81347143496035],
+                [14.85705312419958, 120.81358482099307],
+                [14.856950625340156, 120.81366127113117],
+                [14.85686001095941, 120.81384073822295],
+                [14.856750700547056, 120.81414341951918],
+                [14.856699811155609, 120.81426425620959],
+                [14.856621943030248, 120.81442436440268],
+                [14.856555519842523, 120.81457179043236]
+            ],
+            "Student Union Building (SUB)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.85877843468087, 120.81423403212458],
+                [14.858844855584878, 120.8143270914842],
+                [14.859063855217332, 120.81467753440733],
+                [14.85918731056501, 120.81479836109919],
+                [14.859239608556637, 120.81486691316578],
+                [14.859344199427184, 120.81504179313204],
+                [14.859405514050753, 120.81507483604851]
+            ],
+            "University Hostel": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.85877843468087, 120.81423403212458],
+                [14.858844855584878, 120.8143270914842],
+                [14.859063855217332, 120.81467753440733],
+                [14.85918731056501, 120.81479836109919],
+                [14.859363198889953, 120.81501655029329],
+                [14.859405514050753, 120.81507483604851],
+                [14.85950897584164, 120.81506526710499],
+                [14.85953014902808, 120.81508829598888],
+                [14.859556298012862, 120.81511674404092]
+            ],
+            "University Review Center (URC)": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.85877843468087, 120.81423403212458],
+                [14.858844855584878, 120.8143270914842],
+                [14.859063855217332, 120.81467753440733],
+                [14.85918731056501, 120.81479836109919],
+                [14.859363198889953, 120.81501655029329],
+                [14.859405514050753, 120.81507483604851],
+                [14.85950897584164, 120.81506526710499],
+                [14.85966455799732, 120.81498144215286],
+                [14.859715447388656, 120.81491745236214]
+            ],
+            "URC II": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.85877843468087, 120.81423403212458],
+                [14.858844855584878, 120.8143270914842],
+                [14.859063855217332, 120.81467753440733],
+                [14.85918731056501, 120.81479836109919],
+                [14.859363198889953, 120.81501655029329],
+                [14.859405514050753, 120.81507483604851],
+                [14.85950897584164, 120.81506526710499],
+                [14.85966455799732, 120.81498144215286],
+                [14.859715447388656, 120.81491745236214],
+                [14.859744591010317, 120.81488224424367]
+            ],
+            "BulSU Main Gate 2": [
+                [14.857227383607164, 120.81231458047134],
+                [14.857601000434475, 120.8127598804564],
+                [14.857867290943896, 120.81311032336336],
+                [14.85832990859422, 120.81364702411487],
+                [14.85860268579737, 120.81395562725455],
+                [14.85877843468087, 120.81423403212458],
+                [14.858844855584878, 120.8143270914842],
+                [14.859063855217332, 120.81467753440733],
+                [14.85918731056501, 120.81479836109919],
+                [14.859363198889953, 120.81501655029329],
+                [14.859405514050753, 120.81507483604851],
+                [14.85950897584164, 120.81506526710499],
+                [14.85966455799732, 120.81498144215286],
+                [14.859779377464162, 120.81491264475515],
+                [14.85981059176544, 120.81487744718067]
+            ]
+        };
 
-        // Gate 1 coordinates (Fixed starting point)
-        const GATE_1_COORD = [14.857227383607164, 120.81231458047134];
 
-        // Process raw data into structured array
-        const processedRoutes = rawRouteData.map((route, index) => {
-            const [name, rawCoords] = route;
-            const color = routeColors[index]; // Assign one of the 17 unique colors
+        // --- 2. MAP INITIALIZATION ---
 
-            // Parse coordinates (lat, lon)
-            const coords = rawCoords.split('\n').map(line => {
-                const parts = line.split(',').map(p => parseFloat(p.trim()));
-                // Data format is Latitude, Longitude
-                return [parts[0], parts[1]];
-            });
+        // Initialize the map centered near Gate 1, with an appropriate zoom level to show the campus
+        const map = L.map('map').setView(GATE_1_COORDS, 17);
 
-            // The last point in the sequence is the destination
-            const destinationCoord = coords[coords.length - 1];
+        // Add the OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
 
-            return {
-                id: index + 2, // ID starts at 2 for the first destination
-                name: name,
-                color: color,
-                coords: coords,
-                destination: destinationCoord,
-            };
-        });
-
-        // Add the main starting point
-        const campusPoints = [{
-            name: "Gate 1 Entrance (Start)",
-            lat: GATE_1_COORD[0],
-            lon: GATE_1_COORD[1],
-            color: routeColors[17] // The last color for the start marker
-        }];
-
-        // Add all destination points
-        processedRoutes.forEach(route => {
-            campusPoints.push({
-                name: route.name,
-                lat: route.destination[0],
-                lon: route.destination[1],
-                color: route.color
-            });
-        });
+        let currentPathLayer = null; // To store the currently drawn polyline
+        let startMarker = null;      // To store the Gate 1 marker
+        let endMarker = null;        // To store the Destination marker
 
 
-        const BSU_CENTER = [14.8580, 120.8140];
-        const INITIAL_ZOOM = 17;
+        // --- 3. MARKER SETUP ---
 
-        function initMap() {
-            try {
-                // Initialize the map
-                const map = L.map('map').setView(BSU_CENTER, INITIAL_ZOOM);
+        /**
+         * Sets up the Gate 1 start marker.
+         */
+        function setupStartMarker() {
+            // Green marker for the start point
+            startMarker = L.marker(GATE_1_COORDS, {
+                icon: L.icon({
+                    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map)
+              .bindPopup('<b>Gate 1 Entrance (Start)</b>');
+        }
 
-                // Add the tile layer (Google Maps/OpenStreetMap lookalike)
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                }).addTo(map);
 
-                const dataListContainer = document.getElementById('data-list');
+        // --- 4. PATH DRAWING FUNCTIONALITY ---
 
-                // 1. Plot Markers
-                campusPoints.forEach((point) => {
-                    const markerColorHex = point.color;
-
-                    // Custom SVG icon (Location Pin)
-                    const svgIcon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<svg class="w-7 h-7" style="color:${markerColorHex}; transform: translateY(-100%);" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.54 22.351A21.734 21.734 0 002.35 10.3c0-5.756 4.673-10.43 10.428-10.43s10.428 4.674 10.428 10.43a21.734 21.734 0 00-9.19 12.051zM13.5 10a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" clip-rule="evenodd" /></svg>`,
-                        iconAnchor: [14, 28] // Position the tip of the icon
-                    });
-
-                    L.marker([point.lat, point.lon], {icon: svgIcon}).addTo(map)
-                        .bindPopup(`<b>${point.name}</b><br>Lat: ${point.lat.toFixed(6)}, Lon: ${point.lon.toFixed(6)}`);
-                });
-
-                // 2. Plot Routes and Add to Legend
-                processedRoutes.forEach((route, index) => {
-                     // Leaflet polyline
-                    L.polyline(route.coords, {
-                        color: route.color,
-                        weight: 4,
-                        opacity: 0.7,
-                        dashArray: index % 3 === 0 ? '5, 5' : (index % 3 === 1 ? '10, 5' : null) // Vary line style
-                    }).addTo(map).bindPopup(`${route.name} (${route.coords.length} points)`);
-
-                    // Add route description to data list
-                    const routeItem = document.createElement('div');
-                    routeItem.className = 'flex items-center space-x-3 p-2 rounded-lg shadow-sm bg-gray-50';
-                    routeItem.innerHTML = `
-                        <span style="color: ${route.color};" class="font-bold w-5 h-5 flex items-center justify-center text-xs border border-current rounded-full">${route.id}</span>
-                        <span class="text-sm font-medium text-gray-800">${route.name}</span>
-                    `;
-                    dataListContainer.appendChild(routeItem);
-                });
-
-            } catch (error) {
-                console.error("Error initializing map:", error);
-                document.getElementById('map').innerHTML = `<p class="text-red-600 p-4">Error loading map: ${error.message}. Please check your internet connection or console for details.</p>`;
+        /**
+         * Clears any existing path and destination marker from the map.
+         */
+        function clearPath() {
+            if (currentPathLayer) {
+                map.removeLayer(currentPathLayer);
+            }
+            if (endMarker) {
+                map.removeLayer(endMarker);
             }
         }
 
-        // Initialize map when the window loads
-        window.onload = initMap;
+        /**
+         * Draws the path for the selected destination.
+         * @param {string} destination - The key for the destination building.
+         */
+        function drawPath(destination) {
+            clearPath();
+
+            const pathCoords = ROUTE_PATHS[destination];
+            if (!pathCoords || pathCoords.length < 2) {
+                console.error("Invalid or insufficient path coordinates for: " + destination);
+                return;
+            }
+
+            // 1. Draw the Polyline
+            currentPathLayer = L.polyline(pathCoords, {
+                color: '#0056b3',  // Primary blue color for the path
+                weight: 8,
+                opacity: 0.8,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(map)
+              .bindPopup(`Route to ${destination}`);
+
+            // 2. Add Destination Marker (Red marker for the end point)
+            const endCoord = pathCoords[pathCoords.length - 1];
+
+            endMarker = L.marker(endCoord, {
+                icon: L.icon({
+                    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map)
+              .bindPopup(`<b>Destination: ${destination}</b>`)
+              .openPopup();
+
+            // 3. Zoom the map to fit the entire path
+            map.fitBounds(currentPathLayer.getBounds(), { padding: [50, 50] });
+        }
+
+
+        // --- 5. UI SETUP ---
+
+        /**
+         * Populates the destination dropdown and sets up the event listener.
+         */
+        function setupUI() {
+            const selectElement = document.getElementById('destination-select');
+
+            // Populate Dropdown
+            // Sort destinations alphabetically for better user experience
+            const sortedDestinations = Object.keys(ROUTE_PATHS).sort();
+
+            sortedDestinations.forEach(destination => {
+                const option = document.createElement('option');
+                option.value = destination;
+                option.textContent = destination;
+                selectElement.appendChild(option);
+            });
+
+            // Set up Event Listener
+            selectElement.addEventListener('change', (event) => {
+                const selectedDestination = event.target.value;
+                if (selectedDestination) {
+                    drawPath(selectedDestination);
+                }
+            });
+        }
+
+
+        // --- 6. INITIALIZATION CALL ---
+
+        window.onload = function() {
+            setupStartMarker();
+            setupUI();
+        };
+
     </script>
 </body>
 </html>
