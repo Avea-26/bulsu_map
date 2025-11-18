@@ -11,7 +11,615 @@ import xml.etree.ElementTree as ET
 # --- 0. UTILITY FUNCTIONS & KML GRAPH CONSTRUCTION ---
 # ==============================================================================
 
-
+# KML Content (Updated to use the data from Untitled map (2).kml)
+KML_CONTENT = """<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Untitled map</name>
+    <description/>
+    <Style id="icon-1899-0288D1-nodesc-normal">
+      <IconStyle>
+        <color>ffd18802</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="icon-1899-0288D1-nodesc-highlight">
+      <IconStyle>
+        <color>ffd18802</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <StyleMap id="icon-1899-0288D1-nodesc">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#icon-1899-0288D1-nodesc-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#icon-1899-0288D1-nodesc-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="icon-1899-DB4436-nodesc-normal">
+      <IconStyle>
+        <color>ff3644db</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="icon-1899-DB4436-nodesc-highlight">
+      <IconStyle>
+        <color>ff3644db</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <StyleMap id="icon-1899-DB4436-nodesc">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#icon-1899-DB4436-nodesc-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#icon-1899-DB4436-nodesc-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="line-000000-5-nodesc-normal">
+      <LineStyle>
+        <color>ff000000</color>
+        <width>5</width>
+      </LineStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="line-000000-5-nodesc-highlight">
+      <LineStyle>
+        <color>ff000000</color>
+        <width>7</width>
+      </LineStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <StyleMap id="line-000000-5-nodesc">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#line-000000-5-nodesc-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#line-000000-5-nodesc-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="line-1267FF-5000-nodesc-normal">
+      <LineStyle>
+        <color>ff67ff12</color>
+        <width>5</width>
+      </LineStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="line-1267FF-5000-nodesc-highlight">
+      <LineStyle>
+        <color>ff67ff12</color>
+        <width>7</width>
+      </LineStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <StyleMap id="line-1267FF-5000-nodesc">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#line-1267FF-5000-nodesc-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#line-1267FF-5000-nodesc-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Placemark>
+      <name>Eng'g</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8142186,14.8574643,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Federizo Hall</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8163769,14.8582716,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>CBA Building</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8135223,14.8587155,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>CIT Building</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8128033,14.8580142,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Admissions Office</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8130833,14.858348,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Law Building</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8133502,14.8578964,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>NURSING</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8131379,14.857321,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>SAO and REG</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8144026,14.857777,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Admin/Registrar</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8149202,14.858177,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Clinic</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.815201,14.8580436,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>ORES/CAL/CANTEEN</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8156641,14.8580857,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>LIB</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.813955,14.8588078,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>CS</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8147814,14.8584346,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>CAFA</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.815162,14.8584065,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>HRM</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.813098,14.858591,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>COED</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8145229,14.8574768,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>AC</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8126866,14.8576402,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>NSTP</name>
+      <styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+      <Point>
+        <coordinates>
+          120.8128336,14.8566904,0
+        </coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Gate 1 to Admissions Office</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81232,14.85723,0
+          120.81242,14.85727,0
+          120.8126,14.85761,0
+          120.8128,14.8579,0
+          120.81306,14.85834,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Admissions Office to Law Building</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81306,14.85834,0
+          120.81333,14.85787,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Law Building to CIT Building</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81333,14.85787,0
+          120.81282,14.85798,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Admissions Office to HRM Building</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81306,14.85834,0
+          120.8131,14.85859,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from HRM Building to CBA Building</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.8131,14.85859,0
+          120.81352,14.85872,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from CBA Building to Library</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81352,14.85872,0
+          120.81395,14.85881,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from CBA Building to Gate 4</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81352,14.85872,0
+          120.81423,14.85978,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from CBA Building to CS</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81352,14.85872,0
+          120.81373,14.85852,0
+          120.81395,14.85829,0
+          120.81424,14.85804,0
+          120.81453,14.85804,0
+          120.81478,14.85843,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Law Building to COED</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81333,14.85787,0
+          120.81364,14.85732,0
+          120.81412,14.85744,0
+          120.81435,14.8575,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from COED to Gate 2</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81435,14.8575,0
+          120.81435,14.85732,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from COED to NSTP</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81435,14.8575,0
+          120.81415,14.85722,0
+          120.81394,14.85719,0
+          120.81358,14.85721,0
+          120.81329,14.85721,0
+          120.81316,14.85718,0
+          120.81298,14.85703,0
+          120.81283,14.85669,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from COED to SAO/REG</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81435,14.8575,0
+          120.8144,14.85778,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from SAO/REG to Admin/Registrar</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.8144,14.85778,0
+          120.81453,14.85804,0
+          120.81492,14.85818,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Admin/Registrar to Clinic</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81492,14.85818,0
+          120.8152,14.85804,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Clinic to ORES/CAL/CANTEEN</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.8152,14.85804,0
+          120.81566,14.85809,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from ORES/CAL/CANTEEN to Federizo Hall</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81566,14.85809,0
+          120.81607,14.85838,0
+          120.81639,14.85827,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from ORES/CAL/CANTEEN to Gate 3</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81566,14.85809,0
+          120.81596,14.85796,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from ORES/CAL/CANTEEN to CAFA</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81566,14.85809,0
+          120.81516,14.85841,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from CAFA to CS</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81516,14.85841,0
+          120.81478,14.85843,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Gate 1 to AC</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81232,14.85723,0
+          120.81263,14.85725,0
+          120.81269,14.85764,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from AC to CIT</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81269,14.85764,0
+          120.8127,14.85787,0
+          120.8128,14.85801,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Directions from Law Building to NURSING</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81333,14.85787,0
+          120.81314,14.85732,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>NSTP to NURSING</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81283,14.85669,0
+          120.8129,14.8568,0
+          120.81302,14.85702,0
+          120.81314,14.85732,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>NURSING to Eng'g</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81314,14.85732,0
+          120.81388,14.85744,0
+          120.81422,14.85746,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>NSTP to AC</name>
+      <styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          120.81283,14.85669,0
+          120.81277,14.85675,0
+          120.81267,14.85695,0
+          120.81269,14.85764,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>"""
 
 
 # Haversine distance in meters
@@ -69,6 +677,10 @@ def dijkstra(graph, start_node, end_node):
         return [], float('infinity')
 
 
+# --- KML Graph Parser ---
+KML_NS = {'kml': 'http://www.opengis.net/kml/2.2'}
+# INCREASED TOLERANCE from 15m to 20m for better connectivity
+NODE_MATCH_TOLERANCE_M = 20  # Tolerance for snapping KML points to Buildings
 
 
 def parse_kml_paths(kml_content, building_locations):
