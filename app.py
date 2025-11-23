@@ -352,6 +352,29 @@ else:
 st.sidebar.markdown("Graph nodes: **%d**, graph edges: **%d**" % (len(nodes), sum(len(n) for n in adj.values())//2))
 st.sidebar.caption("Routing uses Dijkstra on the internal graph built from your polylines.")
 
+# -----------------------------
+# ➤ ADDED: icon mapping for buildings (auto-assigned best-fit)
+# -----------------------------
+ICON_MAP = {
+    "LIB": "book",
+    "CLINIC": "hospital-o",
+    "CANTEEN": "cutlery",
+    "ENG": "cog",
+    "CIT": "wrench",
+    "COED": "graduation-cap",
+    "ADMIN": "building",
+    "REG": "file-text-o",
+    "AO": "info-circle",
+    "HP": "flag",
+    "SAO": "users",
+    "AC": "home",
+    "G1": "map-marker",
+    # fallback for others
+}
+
+def get_icon_for(bkey):
+    return ICON_MAP.get(bkey, "university")
+
 # Initialize folium map
 campus_center = [14.85806, 120.814]
 m = folium.Map(location=campus_center, zoom_start=18, tiles=None, control_scale=True)
@@ -378,14 +401,28 @@ L.control.simpleLocate({ position: 'topleft' }).addTo({{this._parent.get_name()}
 """
 m.get_root().script.add_child(folium.Element(locate_js))
 
-# Plot building markers (use initials)
+# -----------------------------
+# Plot building markers (use icon + text label)  # ➤ MODIFIED
+# -----------------------------
 for bkey, node_id in building_node.items():
     lat, lon = nodes[node_id]
+    popup_text = f"{BUILDING_NAMES.get(bkey,bkey)} ({bkey})"
+    tooltip_text = f"{BUILDING_NAMES.get(bkey,bkey)}"
+    # icon marker
     folium.Marker(
         location=[lat, lon],
-        popup=f"{BUILDING_NAMES.get(bkey,bkey)} ({bkey})",
-        tooltip=f"{BUILDING_NAMES.get(bkey,bkey)}",
-        icon=folium.DivIcon(html=f"""<div style="background:rgba(0,0,0,0.6);color:white;padding:4px 6px;border-radius:4px;font-weight:bold;">{bkey}</div>""")
+        popup=popup_text,
+        tooltip=tooltip_text,
+        icon=folium.Icon(icon=get_icon_for(bkey), prefix='fa')
+    ).add_to(m)
+    # text label beside the icon (small semi-transparent background)
+    label_html = f"""<div style="background:rgba(0,0,0,0.6);color:white;padding:3px 6px;border-radius:4px;font-weight:bold;font-size:11px;">
+                        {bkey}
+                    </div>"""
+    # offset the label slightly so it doesn't overlap the icon visually
+    folium.map.Marker(
+        [lat, lon],
+        icon=folium.DivIcon(html=label_html)
     ).add_to(m)
 
 # Draw all raw polylines lightly for network visibility
@@ -414,6 +451,12 @@ if selected_dest and selected_dest != "Select Destination":
 # Render map and capture output
 map_data = st_folium(m, width=1100, height=700)
 
+# -----------------------------
+# ➤ ADDED: session state trail initialization
+# -----------------------------
+if "trail" not in st.session_state:
+    st.session_state["trail"] = []  # list of [lat, lon] points (historic positions)
+
 # Extract user location (supporting a few st_folium versions' keys)
 user_lat = user_lon = None
 for k in ['last_clicked','last_object_clicked','geolocation','location','last_location','last_known_location','user_location','center']:
@@ -423,6 +466,19 @@ for k in ['last_clicked','last_object_clicked','geolocation','location','last_lo
             user_lat, user_lon = val['lat'], val['lng']; break
         if isinstance(val, (list,tuple)) and len(val)>=2:
             user_lat, user_lon = val[0], val[1]; break
+
+# ➤ ADDED: update trail when using live start and geolocation available
+if use_live_start and user_lat and user_lon:
+    new_pt = [user_lat, user_lon]
+    # append only if trail empty or moved noticeably (>= 0.5 m) to avoid duplicates/noise
+    append_point = True
+    if st.session_state["trail"]:
+        last = st.session_state["trail"][-1]
+        dist_m = haversine(last[0], last[1], new_pt[0], new_pt[1])
+        if dist_m < 0.5:
+            append_point = False
+    if append_point:
+        st.session_state["trail"].append(new_pt)
 
 if use_live_start and not (user_lat and user_lon):
     st.sidebar.info("Click the locate button (top-left) to allow browser geolocation and set your start location.")
@@ -457,6 +513,18 @@ elif (not use_live_start) and selected_start and selected_start != "Select Start
             route_coords = [[nodes[n][0], nodes[n][1]] for n in path]
             route_dist_m = dist
 
+# -----------------------------
+# ➤ ADDED: draw the movement trail and current location marker onto the map
+# -----------------------------
+# Only draw trail if there are at least 2 points
+if st.session_state.get("trail") and len(st.session_state["trail"]) >= 1:
+    # draw trail polyline (blue, semi-transparent)
+    folium.PolyLine(locations=st.session_state["trail"], color='#1f78b4', weight=5, opacity=0.8).add_to(m)
+    # draw current location marker (use purple to match route start style)
+    cur = st.session_state["trail"][-1]
+    folium.Marker(location=cur, icon=folium.Icon(color='purple', icon='street-view', prefix='fa'),
+                  tooltip="You (current location)").add_to(m)
+
 # Draw route if found
 if route_coords:
     folium.PolyLine(locations=route_coords, color='purple', weight=7, opacity=0.9).add_to(m)
@@ -467,6 +535,9 @@ if route_coords:
     # re-render map with route overlay
     st_folium(m, width=1100, height=700)
     st.success(f"Route distance: {route_dist_m:.0f} meters ({route_dist_m/1000:.3f} km)")
+else:
+    # If route not drawn above, render the map with trail/icons/labels added
+    st_folium(m, width=1100, height=700)
 
 # Arrival detection message
 if user_lat and user_lon and selected_dest and selected_dest != "Select Destination":
@@ -489,4 +560,3 @@ with st.expander("Graph diagnostics"):
         nid = building_node[k]
         lat,lon = nodes[nid]
         st.write(f"{k}: {nid} @ {lat:.6f},{lon:.6f}")
-
