@@ -6,6 +6,7 @@ from folium import plugins
 import math
 import heapq
 
+
 # -----------------------------
 # Helpers
 # -----------------------------
@@ -14,9 +15,10 @@ def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(math.radians, (lat1, lon1, lat2, lon2))
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
-    c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
+
 
 def dijkstra(adj, start, end):
     if start not in adj or end not in adj:
@@ -26,17 +28,17 @@ def dijkstra(adj, start, end):
     dist[start] = 0
     pq = [(0, start)]
     while pq:
-        d,u = heapq.heappop(pq)
-        if d>dist[u]:
+        d, u = heapq.heappop(pq)
+        if d > dist[u]:
             continue
-        if u==end:
+        if u == end:
             break
-        for v,w in adj[u].items():
+        for v, w in adj[u].items():
             nd = d + w
             if nd < dist[v]:
                 dist[v] = nd
                 prev[v] = u
-                heapq.heappush(pq,(nd,v))
+                heapq.heappush(pq, (nd, v))
     # reconstruct
     if dist[end] == float('inf'):
         return [], float('inf')
@@ -46,6 +48,7 @@ def dijkstra(adj, start, end):
         path.append(cur)
         cur = prev[cur]
     return path[::-1], dist[end]
+
 
 # -----------------------------
 # User-supplied polylines (Gate 1 -> building paths)
@@ -253,6 +256,8 @@ MERGE_TOLERANCE_M = 4.0  # merge points within 4 meters
 
 # node_id -> (lat, lon)
 nodes = {}
+
+
 # map coordinate (lat, lon) candidate to node id by merging rule
 def find_or_create_node(lat, lon):
     # try to find an existing node within tolerance
@@ -264,14 +269,18 @@ def find_or_create_node(lat, lon):
     nodes[nid] = (lat, lon)
     return nid
 
+
 # We'll also track building -> node association to ensure each building has a node
 building_node = {}
 
 # iterate routes and create nodes + edges
 edges = {}  # edges as adjacency temporary: (u)-> {v:distance}
+
+
 def add_edge(u, v, w):
     edges.setdefault(u, {})[v] = min(edges.get(u, {}).get(v, float('inf')), w)
     edges.setdefault(v, {})[u] = min(edges.get(v, {}).get(u, float('inf')), w)
+
 
 # Build graph from each route polyline
 for bkey, poly in ROUTES.items():
@@ -297,11 +306,13 @@ for bkey, poly in ROUTES.items():
         # try snapping building's first poly point to nearest node
         lat, lon = poly[-1]
         # find closest node
-        best = None; bd = float('inf')
+        best = None;
+        bd = float('inf')
         for nid, (nlat, nlon) in nodes.items():
             d = haversine(lat, lon, nlat, nlon)
             if d < bd:
-                bd = d; best = nid
+                bd = d;
+                best = nid
         if best is None:
             # create node
             best = find_or_create_node(lat, lon)
@@ -323,12 +334,14 @@ for u, nbrs in edges.items():
 for bkey, nid in building_node.items():
     if len(adj.get(nid, {})) == 0:
         # connect to nearest other node
-        best = None; bd = float('inf')
+        best = None;
+        bd = float('inf')
         for other, (olat, olon) in nodes.items():
             if other == nid: continue
             d = haversine(nodes[nid][0], nodes[nid][1], olat, olon)
             if d < bd:
-                bd = d; best = other
+                bd = d;
+                best = other
         if best:
             adj[nid][best] = bd
             adj[best][nid] = bd
@@ -342,14 +355,16 @@ st.title("BulSU Campus Map — Graph-based Routes (Gate1 → All Buildings)")
 st.sidebar.header("Routing Controls")
 use_live_start = st.sidebar.checkbox("Use device location as Start (recommended)", value=True)
 dest_options = ["Select Destination"] + sorted([k for k in BUILDING_NAMES.keys() if k != "G1"])
-selected_dest = st.sidebar.selectbox("Destination", options=dest_options, format_func=lambda x: BUILDING_NAMES.get(x, x))
+selected_dest = st.sidebar.selectbox("Destination", options=dest_options,
+                                     format_func=lambda x: BUILDING_NAMES.get(x, x))
 if not use_live_start:
     start_options = ["Select Start"] + sorted([k for k in BUILDING_NAMES.keys()])
-    selected_start = st.sidebar.selectbox("Start", options=start_options, format_func=lambda x: BUILDING_NAMES.get(x, x))
+    selected_start = st.sidebar.selectbox("Start", options=start_options,
+                                          format_func=lambda x: BUILDING_NAMES.get(x, x))
 else:
     selected_start = None
 
-st.sidebar.markdown("Graph nodes: **%d**, graph edges: **%d**" % (len(nodes), sum(len(n) for n in adj.values())//2))
+st.sidebar.markdown("Graph nodes: **%d**, graph edges: **%d**" % (len(nodes), sum(len(n) for n in adj.values()) // 2))
 st.sidebar.caption("Routing uses Dijkstra on the internal graph built from your polylines.")
 
 # -----------------------------
@@ -372,8 +387,10 @@ ICON_MAP = {
     # fallback for others
 }
 
+
 def get_icon_for(bkey):
     return ICON_MAP.get(bkey, "university")
+
 
 # Initialize folium map
 campus_center = [14.85806, 120.814]
@@ -406,8 +423,8 @@ m.get_root().script.add_child(folium.Element(locate_js))
 # -----------------------------
 for bkey, node_id in building_node.items():
     lat, lon = nodes[node_id]
-    popup_text = f"{BUILDING_NAMES.get(bkey,bkey)} ({bkey})"
-    tooltip_text = f"{BUILDING_NAMES.get(bkey,bkey)}"
+    popup_text = f"{BUILDING_NAMES.get(bkey, bkey)} ({bkey})"
+    tooltip_text = f"{BUILDING_NAMES.get(bkey, bkey)}"
     # icon marker
     folium.Marker(
         location=[lat, lon],
@@ -452,22 +469,25 @@ if selected_dest and selected_dest != "Select Destination":
 map_data = st_folium(m, width=1100, height=700)
 
 # -----------------------------
-# ➤ ADDED: session state trail initialization
+# ➤ MODIFIED: session state trail initialization moved here for clarity
 # -----------------------------
 if "trail" not in st.session_state:
     st.session_state["trail"] = []  # list of [lat, lon] points (historic positions)
 
 # Extract user location (supporting a few st_folium versions' keys)
 user_lat = user_lon = None
-for k in ['last_clicked','last_object_clicked','geolocation','location','last_location','last_known_location','user_location','center']:
+for k in ['last_clicked', 'last_object_clicked', 'geolocation', 'location', 'last_location', 'last_known_location',
+          'user_location', 'center']:
     if k in map_data:
         val = map_data[k]
         if isinstance(val, dict) and 'lat' in val and 'lng' in val:
-            user_lat, user_lon = val['lat'], val['lng']; break
-        if isinstance(val, (list,tuple)) and len(val)>=2:
-            user_lat, user_lon = val[0], val[1]; break
+            user_lat, user_lon = val['lat'], val['lng'];
+            break
+        if isinstance(val, (list, tuple)) and len(val) >= 2:
+            user_lat, user_lon = val[0], val[1];
+            break
 
-# ➤ ADDED: update trail when using live start and geolocation available
+# ➤ MODIFIED: update trail when using live start and geolocation available
 if use_live_start and user_lat and user_lon:
     new_pt = [user_lat, user_lon]
     # append only if trail empty or moved noticeably (>= 0.5 m) to avoid duplicates/noise
@@ -487,54 +507,83 @@ if use_live_start and not (user_lat and user_lon):
 route_coords = None
 route_dist_m = None
 
-if use_live_start and user_lat and user_lon and selected_dest and selected_dest != "Select Destination":
-    # snap user to nearest node
-    best = None; bd = float('inf')
-    for nid, (nlat, nlon) in nodes.items():
-        d = haversine(user_lat, user_lon, nlat, nlon)
-        if d < bd:
-            bd = d; best = nid
-    if best is None:
-        st.error("No graph node available to snap your location.")
-    else:
-        start_node = best
+if selected_dest and selected_dest != "Select Destination":
+    start_node = None
+
+    if use_live_start and user_lat and user_lon:
+        # snap user to nearest node
+        best = None;
+        bd = float('inf')
+        for nid, (nlat, nlon) in nodes.items():
+            d = haversine(user_lat, user_lon, nlat, nlon)
+            if d < bd:
+                bd = d;
+                best = nid
+
+        if best is None:
+            st.error("No graph node available to snap your location.")
+        else:
+            start_node = best
+
+    elif (not use_live_start) and selected_start and selected_start != "Select Start":
+        if selected_start not in building_node:
+            st.error("Selected start not recognized.")
+        else:
+            start_node = building_node[selected_start]
+
+    if start_node:
         end_node = building_node[selected_dest]
         path, dist = dijkstra(adj, start_node, end_node)
         if path:
             route_coords = [[nodes[n][0], nodes[n][1]] for n in path]
             route_dist_m = dist
 
-elif (not use_live_start) and selected_start and selected_start != "Select Start" and selected_dest and selected_dest != "Select Destination":
-    if selected_start not in building_node:
-        st.error("Selected start not recognized.")
-    else:
-        path, dist = dijkstra(adj, building_node[selected_start], building_node[selected_dest])
-        if path:
-            route_coords = [[nodes[n][0], nodes[n][1]] for n in path]
-            route_dist_m = dist
-
 # -----------------------------
-# ➤ ADDED: draw the movement trail and current location marker onto the map
+# ➤ MODIFIED: Draw the movement trail FIRST, so it's beneath the route.
 # -----------------------------
 # Only draw trail if there are at least 2 points
 if st.session_state.get("trail") and len(st.session_state["trail"]) >= 1:
-    # draw trail polyline (blue, semi-transparent)
-    folium.PolyLine(locations=st.session_state["trail"], color='#1f78b4', weight=5, opacity=0.8).add_to(m)
-    # draw current location marker (use purple to match route start style)
+    # draw trail polyline (blue, thinner, semi-transparent)
+    # The blue line represents the path the user has taken.
+    folium.PolyLine(locations=st.session_state["trail"], color='#1f78b4', weight=4, opacity=0.7).add_to(m)
+
+    # Draw the current location marker at the end of the trail
     cur = st.session_state["trail"][-1]
-    folium.Marker(location=cur, icon=folium.Icon(color='purple', icon='street-view', prefix='fa'),
+    folium.Marker(location=cur, icon=folium.Icon(color='blue', icon='circle', prefix='fa'),
                   tooltip="You (current location)").add_to(m)
 
-# Draw route if found
+# -----------------------------
+# ➤ MODIFIED: Draw route if found (this is now done SECOND to overlay the trail)
+# -----------------------------
 if route_coords:
+    # --- FIX 1: Add user's exact location to the start of the route polyline ---
+    # This makes the route line start exactly where the blue trail ends.
+    if use_live_start and user_lat and user_lon:
+        # Calculate distance from true user location to the snapped node
+        d_to_node = haversine(user_lat, user_lon, route_coords[0][0], route_coords[0][1])
+
+        # Insert actual user location as the starting point of the route
+        route_coords.insert(0, [user_lat, user_lon])
+        # Update total distance by adding the distance to the snapped node
+        route_dist_m += d_to_node
+
+    # Draw the calculated route (purple, thick)
     folium.PolyLine(locations=route_coords, color='purple', weight=7, opacity=0.9).add_to(m)
-    # add start and end markers
-    s = route_coords[0]; e = route_coords[-1]
-    folium.Marker(location=s, icon=folium.Icon(color='purple', icon='street-view', prefix='fa'), tooltip='Start').add_to(m)
-    folium.Marker(location=e, icon=folium.Icon(color='black', icon='flag-checkered', prefix='fa'), tooltip='Destination').add_to(m)
+
+    # Add start and end markers
+    # The start marker is now placed at the actual user location if using live start
+    s = route_coords[0];
+    e = route_coords[-1]
+
+    # The start marker should be different from the blue trail marker
+    folium.Marker(location=s, icon=folium.Icon(color='purple', icon='street-view', prefix='fa'),
+                  tooltip='Route Start').add_to(m)
+    folium.Marker(location=e, icon=folium.Icon(color='black', icon='flag-checkered', prefix='fa'),
+                  tooltip='Destination').add_to(m)
+
     # re-render map with route overlay
     st_folium(m, width=1100, height=700)
-    st.success(f"Route distance: {route_dist_m:.0f} meters ({route_dist_m/1000:.3f} km)")
+    st.success(f"Route distance: {route_dist_m:.0f} meters ({route_dist_m / 1000:.3f} km)")
 else:
     # If route not drawn above, render the map with trail/icons/labels added
     st_folium(m, width=1100, height=700)
@@ -547,16 +596,19 @@ if user_lat and user_lon and selected_dest and selected_dest != "Select Destinat
         st.balloons()
         st.success(f"Arrived at {BUILDING_NAMES.get(selected_dest, selected_dest)} (within {DEST_PULSE_RADIUS} m).")
     else:
-        st.info(f"{BUILDING_NAMES.get(selected_dest, selected_dest)} is {d_to_dest:.0f} meters away.")
+        # Display distance to destination only if a route wasn't found/calculated above.
+        if route_dist_m is None:
+            st.info(
+                f"{BUILDING_NAMES.get(selected_dest, selected_dest)} is {d_to_dest:.0f} meters away (Straight-line).")
 
 # Diagnostics (optional)
 with st.expander("Graph diagnostics"):
     st.write("Nodes:", len(nodes))
-    edge_count = sum(len(v) for v in adj.values())//2
+    edge_count = sum(len(v) for v in adj.values()) // 2
     st.write("Edges:", edge_count)
     # list buildings mapped to nodes
     st.write("Building → Node mapping (sample):")
     for k in sorted(building_node.keys()):
         nid = building_node[k]
-        lat,lon = nodes[nid]
+        lat, lon = nodes[nid]
         st.write(f"{k}: {nid} @ {lat:.6f},{lon:.6f}")
