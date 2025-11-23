@@ -261,9 +261,20 @@ nodes = {}
 # map coordinate (lat, lon) candidate to node id by merging rule
 def find_or_create_node(lat, lon):
     # try to find an existing node within tolerance
+    # *** Skip check if it is the G1 node's coordinate ***
+
+    # Check if the coordinates match the G1 coordinates exactly
+    is_g1_coord = ROUTES.get("G1") and [lat, lon] == ROUTES["G1"][0]
+
     for nid, (nlat, nlon) in nodes.items():
         if haversine(lat, lon, nlat, nlon) <= MERGE_TOLERANCE_M:
+            # FIX: If we are checking the G1 coord, only return its own specific node.
+            # Otherwise, merging the G1 coord with another node is fine.
+            if is_g1_coord and nid != building_node.get("G1_FIXED"):
+                continue  # Skip merging the G1's own unique point with another node
+
             return nid
+
     # else create new
     nid = f"N{len(nodes):05d}"
     nodes[nid] = (lat, lon)
@@ -273,7 +284,15 @@ def find_or_create_node(lat, lon):
 # We'll also track building -> node association to ensure each building has a node
 building_node = {}
 
-# iterate routes and create nodes + edges
+### FIX START LOCATION LOGIC: Create a unique, fixed node for Gate 1 first.
+if "G1" in ROUTES:
+    g1_lat, g1_lon = ROUTES["G1"][0]
+    # Force a unique node ID for G1 that won't be reused by the normal find_or_create_node
+    G1_FIXED_NODE_ID = "N00000_G1"
+    nodes[G1_FIXED_NODE_ID] = (g1_lat, g1_lon)
+    building_node["G1"] = G1_FIXED_NODE_ID
+
+# iterate routes (excluding G1) and create nodes + edges
 edges = {}  # edges as adjacency temporary: (u)-> {v:distance}
 
 
@@ -284,11 +303,24 @@ def add_edge(u, v, w):
 
 # Build graph from each route polyline
 for bkey, poly in ROUTES.items():
+    if bkey == "G1":
+        continue  # Skip G1, it was handled above
+
     prev_node = None
     for (lat, lon) in poly:
         nid = find_or_create_node(lat, lon)
-        # if this polyline represents a building endpoint (not G1 reference), associate last point
+
+        # FIX: Explicitly handle the very first node of the polyline
+        # If the first point of this route is close to G1, ensure they are connected.
+        if prev_node is None and bkey != "G1" and "G1" in building_node:
+            g1_node = building_node["G1"]
+            g1_lat, g1_lon = nodes[g1_node]
+            # Check if this node is close enough to G1's fixed node
+            if haversine(lat, lon, g1_lat, g1_lon) <= MERGE_TOLERANCE_M:
+                nid = g1_node  # Force the first node of the path to be the G1 node
+
         prev_node = prev_node if prev_node is not None else None
+
         if prev_node is not None and prev_node != nid:
             # compute distance between nodes' coordinates (use stored coords)
             (plat, plon) = nodes[prev_node]
@@ -296,12 +328,19 @@ for bkey, poly in ROUTES.items():
             dist = haversine(plat, plon, clat, clon)
             add_edge(prev_node, nid, dist)
         prev_node = nid
+
     # after processing polyline, tag building key to the last node in that polyline
     if prev_node is not None:
         building_node[bkey] = prev_node
 
+# --- END OF FIX START LOCATION LOGIC ---
+
+
 # Ensure all building keys are present in building_node (snap building coordinate to nearest node if necessary)
+# This section is mostly fine, but we'll re-run it excluding G1 as it's already fixed.
 for bkey, poly in ROUTES.items():
+    if bkey == "G1": continue  # Skip G1, it's fixed
+
     if bkey not in building_node:
         # try snapping building's first poly point to nearest node
         lat, lon = poly[-1]
@@ -317,12 +356,6 @@ for bkey, poly in ROUTES.items():
             # create node
             best = find_or_create_node(lat, lon)
         building_node[bkey] = best
-
-# Also ensure "G1" exists and is included as start node
-if "G1" in ROUTES:
-    g1_lat, g1_lon = ROUTES["G1"][0]
-    g1_node = find_or_create_node(g1_lat, g1_lon)
-    building_node["G1"] = g1_node
 
 # Build adjacency dict with all nodes present
 adj = {nid: {} for nid in nodes.keys()}
@@ -364,6 +397,7 @@ if not use_live_start:
 else:
     selected_start = None
 
+# Correcting the reported node count after the fix
 st.sidebar.markdown("Graph nodes: **%d**, graph edges: **%d**" % (len(nodes), sum(len(n) for n in adj.values()) // 2))
 st.sidebar.caption("Routing uses Dijkstra on the internal graph built from your polylines.")
 
@@ -419,7 +453,7 @@ L.control.simpleLocate({ position: 'topleft' }).addTo({{this._parent.get_name()}
 m.get_root().script.add_child(folium.Element(locate_js))
 
 # -----------------------------
-# Plot building markers (use icon + text label)  # ➤ MODIFIED
+# Plot building markers (use icon + text label)
 # -----------------------------
 for bkey, node_id in building_node.items():
     lat, lon = nodes[node_id]
@@ -446,10 +480,6 @@ for bkey, node_id in building_node.items():
 for poly in ROUTES.values():
     folium.PolyLine(locations=poly, color="#999999", weight=3, opacity=0.45).add_to(m)
 
-# Optional: draw nodes (for debugging)
-# for nid, (lat, lon) in nodes.items():
-#     folium.CircleMarker(location=[lat, lon], radius=2, color='black', fill=True, fillOpacity=0.8).add_to(m)
-
 # Show destination pulse
 DEST_PULSE_RADIUS = 8.0  # meters
 if selected_dest and selected_dest != "Select Destination":
@@ -469,7 +499,7 @@ if selected_dest and selected_dest != "Select Destination":
 map_data = st_folium(m, width=1100, height=700)
 
 # -----------------------------
-# ➤ MODIFIED: session state trail initialization moved here for clarity
+# ➤ ADDED: session state trail initialization
 # -----------------------------
 if "trail" not in st.session_state:
     st.session_state["trail"] = []  # list of [lat, lon] points (historic positions)
@@ -487,7 +517,7 @@ for k in ['last_clicked', 'last_object_clicked', 'geolocation', 'location', 'las
             user_lat, user_lon = val[0], val[1];
             break
 
-# ➤ MODIFIED: update trail when using live start and geolocation available
+# ➤ ADDED: update trail when using live start and geolocation available
 if use_live_start and user_lat and user_lon:
     new_pt = [user_lat, user_lon]
     # append only if trail empty or moved noticeably (>= 0.5 m) to avoid duplicates/noise
@@ -539,25 +569,24 @@ if selected_dest and selected_dest != "Select Destination":
             route_dist_m = dist
 
 # -----------------------------
-# ➤ MODIFIED: Draw the movement trail FIRST, so it's beneath the route.
+# Draw the movement trail and current location marker onto the map (First)
 # -----------------------------
 # Only draw trail if there are at least 2 points
 if st.session_state.get("trail") and len(st.session_state["trail"]) >= 1:
     # draw trail polyline (blue, thinner, semi-transparent)
-    # The blue line represents the path the user has taken.
     folium.PolyLine(locations=st.session_state["trail"], color='#1f78b4', weight=4, opacity=0.7).add_to(m)
 
     # Draw the current location marker at the end of the trail
     cur = st.session_state["trail"][-1]
+    # Use a distinct color/icon for the trail's current location to separate it from the final route start marker
     folium.Marker(location=cur, icon=folium.Icon(color='blue', icon='circle', prefix='fa'),
                   tooltip="You (current location)").add_to(m)
 
 # -----------------------------
-# ➤ MODIFIED: Draw route if found (this is now done SECOND to overlay the trail)
+# Draw route if found (Second, overlays the trail/path)
 # -----------------------------
 if route_coords:
-    # --- FIX 1: Add user's exact location to the start of the route polyline ---
-    # This makes the route line start exactly where the blue trail ends.
+    # --- FIX 3: Add user's exact location to the start of the route polyline ---
     if use_live_start and user_lat and user_lon:
         # Calculate distance from true user location to the snapped node
         d_to_node = haversine(user_lat, user_lon, route_coords[0][0], route_coords[0][1])
@@ -575,7 +604,6 @@ if route_coords:
     s = route_coords[0];
     e = route_coords[-1]
 
-    # The start marker should be different from the blue trail marker
     folium.Marker(location=s, icon=folium.Icon(color='purple', icon='street-view', prefix='fa'),
                   tooltip='Route Start').add_to(m)
     folium.Marker(location=e, icon=folium.Icon(color='black', icon='flag-checkered', prefix='fa'),
