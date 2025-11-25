@@ -470,27 +470,13 @@ m = folium.Map(location=campus_center, zoom_start=17, tiles=None, control_scale=
 folium.TileLayer('OpenStreetMap', name='Map').add_to(m)
 folium.TileLayer('Esri.WorldImagery', name='Satellite').add_to(m)
 
-locate_js = """
-L.Control.EnhancedLocate = L.Control.extend({
-    onAdd: function(map){
-        var btn = L.DomUtil.create('button', 'locate-btn');
-        btn.innerHTML = '➤';
-        btn.title = 'Find My Location';
-        btn.style.cssText = 'width:50px;height:50px;background:#4CAF50;color:white;font-size:24px;border:2px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;';
-        btn.onmouseover = function(){ this.style.background='#45a049'; };
-        btn.onmouseout = function(){ this.style.background='#4CAF50'; };
-        L.DomEvent.on(btn, 'click', function(e){
-            L.DomEvent.stopPropagation(e);
-            map.locate({setView:true, maxZoom:18, enableHighAccuracy:true});
-        });
-        return btn;
-    },
-    onRemove: function(map){}
-});
-L.control.enhancedLocate = function(opts){ return new L.Control.EnhancedLocate(opts); };
-L.control.enhancedLocate({ position: 'topleft' }).addTo(""" + m.get_name() + """);
-"""
-m.get_root().script.add_child(folium.Element(locate_js))
+# Add locate control for GPS tracking
+plugins.LocateControl(
+    auto_start=False,
+    position='topleft',
+    strings={'title': 'Find My Location'},
+    locateOptions={'enableHighAccuracy': True, 'maxZoom': 18}
+).add_to(m)
 
 for bkey, node_id in building_node.items():
     lat, lon = nodes[node_id]
@@ -503,9 +489,7 @@ for bkey, node_id in building_node.items():
     label_html = f"""<div style="background:rgba(0,0,0,0.7);color:white;padding:4px 8px;border-radius:4px;font-weight:bold;font-size:11px;white-space:nowrap;">{bkey}</div>"""
     folium.map.Marker([lat, lon], icon=folium.DivIcon(html=label_html)).add_to(m)
 
-for poly in ROUTES.values():
-    if len(poly) > 1:
-        folium.PolyLine(locations=poly, color="#999999", weight=2, opacity=0.3).add_to(m)
+# Don't show all route lines - only show the selected route later
 
 DEST_PULSE_RADIUS = 8.0
 if selected_dest and selected_dest != "Select Destination":
