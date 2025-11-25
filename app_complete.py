@@ -135,22 +135,22 @@ def parse_kml():
     """Parse KML data and extract buildings and routes"""
     root = ET.fromstring(KML_DATA)
     ns = {'kml': 'http://www.opengis.net/kml/2.2'}
-
+    
     buildings = {}
     routes = {}
-
+    
     for placemark in root.findall('.//kml:Placemark', ns):
         name_elem = placemark.find('kml:name', ns)
         if name_elem is None:
             continue
         name = name_elem.text
-
+        
         point = placemark.find('.//kml:Point/kml:coordinates', ns)
         if point is not None:
             coords = point.text.strip().split(',')
             lon, lat = float(coords[0]), float(coords[1])
             buildings[name] = [lat, lon]
-
+        
         linestring = placemark.find('.//kml:LineString/kml:coordinates', ns)
         if linestring is not None:
             coords_text = linestring.text.strip()
@@ -162,7 +162,7 @@ def parse_kml():
                     coords_list.append([lat, lon])
             if coords_list:
                 routes[name] = coords_list
-
+    
     return buildings, routes
 
 
@@ -242,7 +242,6 @@ MERGE_TOLERANCE_M = 4.0
 nodes = {}
 building_node = {}
 
-
 def find_or_create_node(lat, lon):
     is_g1_coord = ROUTES.get("G1") and [lat, lon] == ROUTES["G1"][0]
     for nid, (nlat, nlon) in nodes.items():
@@ -254,7 +253,6 @@ def find_or_create_node(lat, lon):
     nodes[nid] = (lat, lon)
     return nid
 
-
 if "G1" in ROUTES:
     g1_lat, g1_lon = ROUTES["G1"][0]
     G1_FIXED_NODE_ID = "N00000_G1"
@@ -263,11 +261,9 @@ if "G1" in ROUTES:
 
 edges = {}
 
-
 def add_edge(u, v, w):
     edges.setdefault(u, {})[v] = min(edges.get(u, {}).get(v, float('inf')), w)
     edges.setdefault(v, {})[u] = min(edges.get(v, {}).get(u, float('inf')), w)
-
 
 for bkey, poly in ROUTES.items():
     if bkey == "G1":
@@ -333,10 +329,8 @@ ICON_MAP = {
     "CS": "flask", "CAFA": "paint-brush", "GRAD": "mortar-board",
 }
 
-
 def get_icon_for(bkey):
     return ICON_MAP.get(bkey, "university")
-
 
 # Streamlit UI
 st.set_page_config(page_title="BulSU Campus Navigation", layout="wide")
@@ -428,7 +422,7 @@ if "trail" not in st.session_state:
     st.session_state["trail"] = []
 
 user_lat = user_lon = None
-for k in ['last_clicked', 'last_object_clicked', 'geolocation', 'location', 'last_location',
+for k in ['last_clicked', 'last_object_clicked', 'geolocation', 'location', 'last_location', 
           'last_known_location', 'user_location', 'center']:
     if k in map_data and map_data[k]:
         val = map_data[k]
@@ -460,7 +454,7 @@ if selected_dest and selected_dest != "Select Destination" and user_lat and user
         if d < bd:
             bd = d
             best = nid
-
+    
     if best:
         end_node = building_node[selected_dest]
         path, dist = dijkstra(adj, best, end_node)
