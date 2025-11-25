@@ -589,10 +589,6 @@ if st.session_state.get("trail") and len(st.session_state["trail"]) >= 1:
 
 if route_coords:
     folium.PolyLine(locations=route_coords, color='#9C27B0', weight=8, opacity=0.9).add_to(m)
-    folium.Marker(location=route_coords[0], icon=folium.Icon(color='green', icon='play', prefix='fa'),
-                  tooltip='🚀 Start').add_to(m)
-    folium.Marker(location=route_coords[-1], icon=folium.Icon(color='red', icon='flag-checkered', prefix='fa'),
-                  tooltip='🏁 Destination').add_to(m)
     st_folium(m, width=1100, height=700, key="route_map")
     st.success(f"📏 Route distance: **{route_dist_m:.0f} meters** ({route_dist_m / 1000:.2f} km)")
     eta_seconds = route_dist_m / 1.4
