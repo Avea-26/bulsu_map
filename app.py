@@ -233,9 +233,59 @@ for route_name, route_coords in KML_ROUTES.items():
     elif "NSTP" in route_name:
         ROUTES["NSTP"] = route_coords
 
+# For buildings without detailed routes, create paths that connect to the road network
+# by finding intermediate points from existing detailed routes
 for code, coords in BUILDING_COORDS.items():
     if code not in ROUTES and code != "G1":
-        ROUTES[code] = [BUILDING_COORDS["G1"], coords]
+        # Strategy: Find a path that goes through the detailed route network
+        # by connecting to intermediate points from existing routes
+
+        # Get all unique points from detailed routes (excluding Gate 1)
+        all_route_points = set()
+        for route_name, route_coords in ROUTES.items():
+            if route_name != "G1":
+                for point in route_coords[1:]:  # Skip Gate 1 point
+                    all_route_points.add(tuple(point))
+
+        # Find the closest route point to the destination
+        closest_point = None
+        min_distance = float('inf')
+
+        for point in all_route_points:
+            dist = haversine(coords[0], coords[1], point[0], point[1])
+            if dist < min_distance:
+                min_distance = dist
+                closest_point = point
+
+        if closest_point and min_distance < 200:  # Only if reasonably close (200m)
+            # Create path: Gate 1 -> closest route point -> destination
+            ROUTES[code] = [BUILDING_COORDS["G1"], list(closest_point), coords]
+        else:
+            # For distant buildings, try to find a path through multiple intermediate points
+            # This creates a more realistic walking path
+            intermediate_points = []
+
+            # Sample a few points from different routes to create connections
+            route_sample_points = []
+            for route_coords in ROUTES.values():
+                if len(route_coords) > 2:  # Only detailed routes
+                    # Take middle points from routes
+                    mid_idx = len(route_coords) // 2
+                    route_sample_points.append(route_coords[mid_idx])
+
+            # Find 1-2 intermediate points that create a reasonable path
+            for sample_point in route_sample_points[:3]:  # Limit to 3 samples
+                dist_to_dest = haversine(sample_point[0], sample_point[1], coords[0], coords[1])
+                if dist_to_dest < 500:  # If sample point is reasonably close to destination
+                    intermediate_points.append(sample_point)
+                    break
+
+            if intermediate_points:
+                path = [BUILDING_COORDS["G1"]] + intermediate_points + [coords]
+                ROUTES[code] = path
+            else:
+                # Final fallback: straight line
+                ROUTES[code] = [BUILDING_COORDS["G1"], coords]
 
 # Build graph
 MERGE_TOLERANCE_M = 4.0
