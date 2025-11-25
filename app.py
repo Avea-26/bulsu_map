@@ -518,9 +518,6 @@ if selected_dest and selected_dest != "Select Destination":
 
 map_data = st_folium(m, width=1100, height=700, key="main_map")
 
-if "trail" not in st.session_state:
-    st.session_state["trail"] = []
-
 user_lat = user_lon = None
 for k in ['last_clicked', 'last_object_clicked', 'geolocation', 'location', 'last_location',
           'last_known_location', 'user_location', 'center']:
@@ -532,16 +529,6 @@ for k in ['last_clicked', 'last_object_clicked', 'geolocation', 'location', 'las
         if isinstance(val, (list, tuple)) and len(val) >= 2:
             user_lat, user_lon = val[0], val[1]
             break
-
-if user_lat and user_lon:
-    new_pt = [user_lat, user_lon]
-    append_point = True
-    if st.session_state["trail"]:
-        last = st.session_state["trail"][-1]
-        if haversine(last[0], last[1], new_pt[0], new_pt[1]) < 0.5:
-            append_point = False
-    if append_point:
-        st.session_state["trail"].append(new_pt)
 
 route_coords = None
 route_dist_m = None
@@ -565,11 +552,13 @@ if selected_dest and selected_dest != "Select Destination" and user_lat and user
             route_coords.insert(0, [user_lat, user_lon])
             route_dist_m += d_to_node
 
-if st.session_state.get("trail") and len(st.session_state["trail"]) >= 1:
-    folium.PolyLine(locations=st.session_state["trail"], color='#1E88E5', weight=5, opacity=0.8).add_to(m)
-    cur = st.session_state["trail"][-1]
-    folium.Marker(location=cur, icon=folium.Icon(color='blue', icon='circle', prefix='fa'),
-                  tooltip="📍 You are here").add_to(m)
+# Show current location marker if GPS is active
+if user_lat and user_lon:
+    folium.Marker(
+        location=[user_lat, user_lon],
+        icon=folium.Icon(color='blue', icon='circle', prefix='fa'),
+        tooltip="📍 You are here"
+    ).add_to(m)
 
 if route_coords:
     folium.PolyLine(locations=route_coords, color='#9C27B0', weight=8, opacity=0.9).add_to(m)
