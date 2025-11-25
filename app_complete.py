@@ -477,4 +477,30 @@ if route_coords:
                   tooltip='🚀 Start').add_to(m)
     folium.Marker(location=route_coords[-1], icon=folium.Icon(color='red', icon='flag-checkered', prefix='fa'),
                   tooltip='🏁 Destination').add_to(m)
-    st_folium(m, width=1100, height=700,
+    st_folium(m, width=1100, height=700, key="route_map")
+    st.success(f"📏 Route distance: **{route_dist_m:.0f} meters** ({route_dist_m / 1000:.2f} km)")
+    eta_seconds = route_dist_m / 1.4
+    eta_minutes = int(eta_seconds / 60)
+    st.info(f"⏱️ Estimated walking time: **{eta_minutes} minutes**")
+
+# Arrival detection
+if user_lat and user_lon and selected_dest and selected_dest != "Select Destination":
+    dest_n = building_node[selected_dest]
+    d_to_dest = haversine(user_lat, user_lon, nodes[dest_n][0], nodes[dest_n][1])
+    if d_to_dest <= DEST_PULSE_RADIUS:
+        st.balloons()
+        st.success(f"🎉 Arrived at {BUILDING_NAMES.get(selected_dest, selected_dest)} (within {DEST_PULSE_RADIUS} m)!")
+    else:
+        if route_dist_m is None:
+            st.info(f"{BUILDING_NAMES.get(selected_dest, selected_dest)} is {d_to_dest:.0f} meters away (Straight-line).")
+
+# Diagnostics (optional)
+with st.expander("📊 Graph diagnostics"):
+    st.write(f"**Nodes:** {len(nodes)}")
+    edge_count = sum(len(n) for n in adj.values()) // 2
+    st.write(f"**Edges:** {edge_count}")
+    st.write("**Building → Node mapping (sample):**")
+    for k in sorted(list(building_node.keys())[:10]):  # Show first 10
+        nid = building_node[k]
+        lat, lon = nodes[nid]
+        st.write(f"{k}: {nid} @ {lat:.6f},{lon:.6f}")
